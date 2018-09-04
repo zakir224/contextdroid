@@ -1,0 +1,9 @@
+com.android.internal.telephony.IccPhoneBookInterfaceManager.getAdnRecordsInEf(int)java.util.List  ::  android.permission.READ_CONTACTS
+com.android.internal.telephony.IccPhoneBookInterfaceManagerProxy.getAdnRecordsInEf(int)java.util.List  ::  android.permission.READ_CONTACTS
+com.android.internal.telephony.UiccPhoneBookController.getAdnRecordsInEfForSubscriber(int,int)java.util.List  ::  android.permission.READ_CONTACTS
+com.android.internal.telephony.UiccPhoneBookController.getAdnRecordsInEf(int)java.util.List  ::  android.permission.READ_CONTACTS
+com.android.server.LockSettingsService.getBoolean(java.lang.String,boolean,int)boolean  ::  android.permission.ACCESS_KEYGUARD_SECURE_STORAGE, android.permission.READ_CONTACTS
+com.android.server.LockSettingsService.getLong(java.lang.String,long,int)long  ::  android.permission.ACCESS_KEYGUARD_SECURE_STORAGE, android.permission.READ_CONTACTS
+com.android.server.LockSettingsService.getSeparateProfileChallengeEnabled(int)boolean  ::  android.permission.ACCESS_KEYGUARD_SECURE_STORAGE, android.permission.READ_CONTACTS
+com.android.server.LockSettingsService.getString(java.lang.String,java.lang.String,int)java.lang.String  ::  android.permission.ACCESS_KEYGUARD_SECURE_STORAGE, android.permission.READ_CONTACTS
+com.android.server.LockSettingsService.systemReady()void  ::  android.permission.ACCESS_KEYGUARD_SECURE_STORAGE, android.permission.READ_CONTACTS
