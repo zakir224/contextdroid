@@ -10,8 +10,8 @@ public class Main {
 //            String apkName = args[0];
 //            String androidPlatform = args[1];
 //            String folder = args[2];
-            ContextDroid contextDroid = new ContextDroid("/Users/zakir/Desktop/problem apk/"
-                    , "/Users/zakir/Library/Android/sdk/platforms", "mirror", 0,4);
+            ContextDroid contextDroid = new ContextDroid("/home/zakir/Desktop/problem apk"
+                    , "/mnt/6a3e12f5-fa82-4667-be38-a46ad0e34f7c/android-studio/sdk/platforms", "problem", 0,4);
             contextDroid.start();
         } else {
             System.out.println("Not enough arguments");

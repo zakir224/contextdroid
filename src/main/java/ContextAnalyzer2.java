@@ -9,7 +9,7 @@ import soot.jimple.infoflow.android.SetupApplication;
 import soot.jimple.infoflow.android.data.parsers.PermissionMethodParser;
 import soot.jimple.infoflow.android.manifest.ProcessManifest;
 import soot.jimple.toolkits.callgraph.CallGraph;
-import sun.plugin2.util.SystemUtil;
+//import sun.plugin2.util.SystemUtil;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
@@ -191,6 +191,7 @@ public class ContextAnalyzer2 {
         for (SootMethod method :
                 listOfAppMethods) {
             checkPermission(method);
+            extractPermissionRequest(method);
         }
     }
 
@@ -200,9 +201,8 @@ public class ContextAnalyzer2 {
             String methodBody = sootMethod.getActiveBody().toString();
 
             for (Permission s : permissionSet) {
-                extractRationale(sootMethod);
+                //extractRationale(sootMethod);
                 extractPermissionUsage(s, methodBody, sootMethod);
-                extractPermissionRequest(sootMethod);
             }
         } catch (Exception e) {
             System.out.println(e.getMessage());

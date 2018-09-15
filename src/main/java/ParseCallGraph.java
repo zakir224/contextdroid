@@ -636,11 +636,7 @@ public class ParseCallGraph {
         String methodActiveBody = sootMethod.getActiveBody().toString();
 
         if (methodActiveBody.contains("shouldShowRequestPermissionRationale")) {
-            System.out.println("Permission Rationale Found");
-            InfoflowCFG icfg = new InfoflowCFG();
-            DirectedGraph<Unit> ug = icfg.getOrCreateUnitGraph(sootMethod);
-            Iterator<Unit> uit = ug.iterator();
-            Iterable<SootMethod> checkOrRequestPermissionCallee;
+            //
         }
 //        while (uit.hasNext()) {
 //            Unit u = uit.next();

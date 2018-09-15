@@ -35,7 +35,7 @@ public class FlowDroidCallGraph {
     }
 
     private CallGraph constructCallGraph (SetupApplication setupApplication, String apkName)
-            throws SootResolver.SootClassNotFoundException,NullPointerException {
+            throws SootMethodRefImpl.ClassResolutionFailedException,NullPointerException {
         PackManager.v().getPack("cg");
         PackManager.v().getPack("jb");
         PackManager.v().getPack("wjap.cgg");
