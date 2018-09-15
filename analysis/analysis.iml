@@ -7,8 +7,19 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="soot" level="project" />
-    <orderEntry type="library" name="PrivacyRankerV1" level="project" />
-    <orderEntry type="module" module-name="PrivacyRankerV1" />
+    <orderEntry type="module" module-name="contextdroid" />
+    <orderEntry type="module-library">
+      <library>
+        <CLASSES>
+          <root url="file://$MODULE_DIR$/../../soot" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="file://$MODULE_DIR$/../../soot" />
+        </SOURCES>
+        <jarDirectory url="file://$MODULE_DIR$/../../soot" recursive="false" />
+        <jarDirectory url="file://$MODULE_DIR$/../../soot" recursive="false" type="SOURCES" />
+      </library>
+    </orderEntry>
   </component>
 </module>
