@@ -1,8 +1,7 @@
 package main.java;
 
 import com.google.common.base.Strings;
-import main.java.ContextAnalyzer;
-import soot.jimple.infoflow.android.manifest.ProcessManifest;
+import main.java.Util.CommonUtil;
 
 import java.io.*;
 import java.util.*;
@@ -15,7 +14,7 @@ public class ContextDroid {
     private final String folder;
     private int startingPoint;
     private int endPoint;
-    ContextAnalyzer contextAnalyzer;
+    ContextAnalyzer2 contextAnalyzer;
     private ArrayList<String> apkList;
 
     public ContextDroid(String apkName, String androidPlatform, String folder, int startingPoint, int endPoint) {
@@ -38,12 +37,17 @@ public class ContextDroid {
             System.out.println("Error 444: no apks found in the directory");
             return;
         }
-        for (int i = startingPoint; i < apkList.size(); i++) {
-            contextAnalyzer = new ContextAnalyzer(androidPlatform, apkList.get(i), folder);
-            contextAnalyzer.startAnalysis(false);
-            contextAnalyzer = null;
+
+        long start = System.currentTimeMillis();
+        contextAnalyzer = new ContextAnalyzer2(androidPlatform, apkList.get(0), this.folder);
+        for (int i = 0; i < apkList.size(); i++) {
+            contextAnalyzer.start(apkList.get(i));
             writeResultToFile(folder+ "\t" + apkList.get(i) + "\t" + i);
         }
+        long end = System.currentTimeMillis();
+        System.out.println("Analyzed: "
+                + apkList.size() + "apps in "
+                + CommonUtil.getTimeDifferenceInSeconds(start, end) + " seconds");
     }
 
     private void listFiles(String apkName) {

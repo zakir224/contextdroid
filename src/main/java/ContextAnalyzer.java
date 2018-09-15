@@ -1,19 +1,21 @@
 package main.java;
 
-import main.java.Permission.PermissionMapping;
 import main.java.Permission.Permission;
+import main.java.Permission.PSCoutPermissionMap;
 import org.xmlpull.v1.XmlPullParserException;
 import soot.*;
 import soot.jimple.infoflow.android.SetupApplication;
 import soot.jimple.infoflow.android.data.parsers.PermissionMethodParser;
 import soot.jimple.infoflow.android.manifest.ProcessManifest;
-//import soot.jimple.infoflow.source.data.SourceSinkDefinition;
-import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.options.Options;
 
-import java.io.*;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.*;
 import java.util.zip.ZipException;
+
+//import soot.jimple.infoflow.source.data.SourceSinkDefinition;
 
 public class ContextAnalyzer {
 
@@ -50,14 +52,13 @@ public class ContextAnalyzer {
 
     private void initializeAnalyzer() {
         System.out.println("Initializing: ContextAnalyzer\n\n");
-        permissionHashMap = PermissionMapping.loadPermissionMapping();
+//        permissionHashMap = PSCoutPermissionMap.loadPermissionMapping();
         permissionSet = permissionHashMap.values();
         if (!extractManifestInfo())
             return;
-        soot.G.reset();
+        G.reset();
         analyzer = new SetupApplication(androidPlatform, appToAnalyze);
-        analyzer.getConfig().setEnableStaticFieldTracking(true); //no static field tracking --nostatic
-        analyzer.getConfig().setAccessPathLength(5); // specify access path length
+        analyzer.getConfig().setEnableStaticFieldTracking(true);
         analyzer.getConfig().setFlowSensitiveAliasing(true); // alias flowin
         analyzer.getConfig().setTaintAnalysisEnabled(false);
         analyzer.getConfig().setMergeDexFiles(true);
@@ -128,21 +129,13 @@ public class ContextAnalyzer {
             }
             return false;
         }
-//        if(shouldRunInfoFlow) {
-//            try {
-//                analyzer.runInfoflow(new HashSet<>(), new HashSet<>());
-//            } catch (IOException | XmlPullParserException e) {
-//                e.printStackTrace();
-//                return false;
-//            }
-//        }
         return true;
     }
 
     private void startCallGraphAnalysis() {
         System.out.println("Starting call graph analysis..\n\n");
         try {
-            parseCallGraph = new ParseCallGraph(Scene.v().getCallGraph());
+//            parseCallGraph = new ParseCallGraph(Scene.v().getCallGraph());
         } catch (RuntimeException e) {
             try {
                 writeResultToFile(appToAnalyze + "\t" + packageName + "\t" + versionCode
@@ -152,9 +145,8 @@ public class ContextAnalyzer {
                 e1.printStackTrace();
             }
         }
-        parseCallGraph.setClassList(Scene.v().getApplicationClasses());
         parseCallGraph.setAppPackageName(packageName);
-        listOfAppMethods = parseCallGraph.listMethods(true);
+        listOfAppMethods = parseCallGraph.listMethods();
     }
 
     public void startAnalysis(boolean shouldRunInfoFlow) {

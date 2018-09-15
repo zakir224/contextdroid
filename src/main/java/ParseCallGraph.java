@@ -22,20 +22,36 @@ public class ParseCallGraph {
     private HashMap<String, Integer> eventCallBlackClasses;
     private MethodContext methodContext;
     private RequestMethodContext requestMethodContext;
-    private Chain<SootClass> classes;
     private String appPackageName;
 
+    private ParseCallGraph parseCallGraph;
 
-    public ParseCallGraph(CallGraph callGraph) {
-        this.callGraph = callGraph;
+//    public ParseCallGraph getInstance() {
+//        if (parseCallGraph == null) {
+//            parseCallGraph = new ParseCallGraph();
+//        }
+//        return parseCallGraph;
+//    }
+
+    public ParseCallGraph() {
+
+    }
+
+    public ParseCallGraph init() {
         eventCallBlackClasses = new HashMap<>();
         permissionCheckerMethods = new HashMap<>();
         loadCallbacks();
+
+        return this;
+    }
+
+    public void setCallGraph(CallGraph callGraph) {
+        this.callGraph = callGraph;
     }
 
     /*
-    isSelf tells whether this is the original method. if yes it's not added to the called methods list.
-     */
+        isSelf tells whether this is the original method. if yes it's not added to the called methods list.
+         */
     public void retrieveCallers(SootMethod sootMethod, MethodContext methodContext, boolean isSelf) {
         Iterator sources = new Sources(callGraph.edgesInto(sootMethod));
 
@@ -92,13 +108,9 @@ public class ParseCallGraph {
         return callerMethod;
     }
 
-    public ArrayList<SootMethod> listMethods(boolean fromCallGraph) {
+    public ArrayList<SootMethod> listMethods() {
         ArrayList<SootMethod> listOfMethods = new ArrayList<>();
-        if (fromCallGraph) {
-            listMethodsFromCallGraph(listOfMethods);
-        } else {
-            listMethodsFromClasses(listOfMethods);
-        }
+        listMethodsFromCallGraph(listOfMethods);
         listOfMethods = listSupportFragments(listOfMethods);
         return listOfMethods;
     }
@@ -151,7 +163,6 @@ public class ParseCallGraph {
     private void listMethodsFromCallGraph(ArrayList<SootMethod> listOfMethods) {
         Iterator<MethodOrMethodContext> tr = callGraph.sourceMethods();
         HashMap<String, Integer> listOfVisitedMethods = new HashMap<>();
-        ArrayList<HashMap<String, SootMethod>> hashMapArrayList = new ArrayList<>();
 
         while (tr.hasNext()) {
             SootMethod mainSourceMethod = (SootMethod) tr.next();
@@ -273,7 +284,7 @@ public class ParseCallGraph {
             isLibraryMethod = true;
         }
 
-        methodContext = new MethodContext();
+        MethodContext methodContext = new MethodContext();
         methodContext.setVisibilityType(classType);
         methodContext.setPackageName(packageName);
         methodContext.setClassName(className);
@@ -495,17 +506,6 @@ public class ParseCallGraph {
         return permissionString;
     }
 
-    public void setClassList(Chain<SootClass> classes) {
-        this.classes = classes;
-    }
-
-    private void listMethodsFromClasses(ArrayList<SootMethod> listOfMethods) {
-        for (SootClass sootClass :
-                classes) {
-            listOfMethods.addAll(sootClass.getMethods());
-        }
-    }
-
     public String getAppPackageName() {
         return appPackageName;
     }
@@ -544,7 +544,7 @@ public class ParseCallGraph {
     private void extendFragmentCallGraph(SootMethod targetMethod) {
         InfoflowCFG icfg = new InfoflowCFG();
 //        if(targetMethod.getActiveBody() == null)
-            targetMethod.retrieveActiveBody();
+        targetMethod.retrieveActiveBody();
         DirectedGraph<Unit> ug = icfg.getOrCreateUnitGraph(targetMethod);
         Iterator<Unit> uit = ug.iterator();
         Iterable<SootMethod> checkOrRequestPermissionCallee;
@@ -586,12 +586,13 @@ public class ParseCallGraph {
 
     /**
      * Method not used in the analysis. may be I can use it later on if call graph needs to be extended.
+     *
      * @param u
      * @param icfg
      * @return
      */
     private boolean findCalleesFragment(Unit u, InfoflowCFG icfg) {
-        if(u.toString().contains("myapplication.a")) {
+        if (u.toString().contains("myapplication.a")) {
             int i = 0;
             List<ValueBox> useAndDefBoxes = u.getUseAndDefBoxes();
             List<ValueBox> useDefBoxes = u.getDefBoxes();
@@ -634,7 +635,7 @@ public class ParseCallGraph {
 
         String methodActiveBody = sootMethod.getActiveBody().toString();
 
-        if(methodActiveBody.contains("shouldShowRequestPermissionRationale")) {
+        if (methodActiveBody.contains("shouldShowRequestPermissionRationale")) {
             System.out.println("Permission Rationale Found");
             InfoflowCFG icfg = new InfoflowCFG();
             DirectedGraph<Unit> ug = icfg.getOrCreateUnitGraph(sootMethod);

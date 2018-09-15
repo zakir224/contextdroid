@@ -1,6 +1,5 @@
 import main.java.MethodContext;
 import main.java.RequestMethodContext;
-import soot.jimple.infoflow.entryPointCreators.AndroidEntryPointConstants;
 
 import java.io.*;
 import java.util.*;
@@ -86,10 +85,10 @@ public class Analysis {
     private static HashMap<String, ContextScore> contextScoreHashMap = new HashMap<>();
 
     public static void main(String[] args) {
-        activityLifecycleMethods = AndroidEntryPointConstants.getActivityLifecycleMethods();
-        fragmentLifecycleMethods = AndroidEntryPointConstants.getFragmentLifecycleMethods();
-        serviceLifecycleMethods = AndroidEntryPointConstants.getServiceLifecycleMethods();
-        broadCastLifeCycleMethods = AndroidEntryPointConstants.getBroadcastLifecycleMethods();
+//        activityLifecycleMethods = AndroidEntryPointConstants.getActivityLifecycleMethods();
+//        fragmentLifecycleMethods = AndroidEntryPointConstants.getFragmentLifecycleMethods();
+//        serviceLifecycleMethods = AndroidEntryPointConstants.getServiceLifecycleMethods();
+//        broadCastLifeCycleMethods = AndroidEntryPointConstants.getBroadcastLifecycleMethods();
         appPermissions = new HashMap<>();
         appPermissionRequests = new HashMap<>();
         appPermissionUsage = new HashMap<>();
