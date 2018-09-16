@@ -2,6 +2,7 @@ package main.java;
 
 import com.google.common.base.Strings;
 import main.java.Permission.Permission;
+import main.java.Util.PermissionUtil;
 import soot.*;
 import soot.jimple.infoflow.solver.cfg.InfoflowCFG;
 import soot.jimple.toolkits.callgraph.CallGraph;
@@ -409,27 +410,12 @@ public class ParseCallGraph {
         return requestMethodContext;
     }
 
-    /*
-    isSelf tells whether this is the original method. if yes it's not added to the called methods list.
-    */
-    public void retrievePermissionCheckCallers(SootMethod sootMethod, boolean isSelf) {
-        Iterator sources = new Sources(callGraph.edgesInto(sootMethod));
-
-        if (sources.hasNext()) {
-            extractPermissionCheckAndRequest((SootMethod) sources.next());
-//            retrievePermissionCheckCallers((SootMethod) sources.next(), false);
-        } else {
-            int i = 0;
-        }
-    }
-
-
     private String returnPermissionStringIfPresent(PatchingChain<Unit> activeBody) {
         String permission = "";
         for (Unit unit : activeBody) {
             try {
                 String unitString = unit.toString();
-                String newPerm = getPermissionString(unitString);
+                String newPerm = PermissionUtil.getPermissionString(appPackageName, unitString);
 
                 if (permission.isEmpty()) {
                     permission = newPerm;
@@ -444,33 +430,7 @@ public class ParseCallGraph {
         return permission;
     }
 
-    private boolean findPermissionRequest(String unitString) {
-        return (
-                (
-                        unitString.contains("android.support.v4.app.ActivityCompat")
-                                || unitString.contains("android.support.v4.app.Activity")
-                                || unitString.contains("android.support.v13.app.FragmentCompat")
-                                || unitString.contains("android.support.v4.app.Fragment")
-                                || unitString.contains("android.content.Context")
-                                || unitString.contains("android.content.pm.PackageManager")
-                                || unitString.contains("android.support.v4.app.FragmentHostCallback")
-                                || unitString.contains("android.support.v4.app.ActivityCompat")
-                                || unitString.contains("Activity")
-                                || unitString.contains("Fragment")
-                                || unitString.contains("android.support")
-                )
-                        &&
-                        (
-                                (unitString.contains("android.content.Context") && unitString.contains("java.lang.String[]")) ||
-                                        (
-                                                unitString.contains("requestPermissions")
-                                                        || (unitString.contains("onRequestPermissionsFromFragment"))
-                                                        || (unitString.contains("requestPermission"))
-                                        )
 
-                        )
-        );
-    }
 
     private boolean findPermissionCheck(String unitString) {
         return (unitString.contains("android.support.v4.content.ContextCompat")
@@ -490,21 +450,7 @@ public class ParseCallGraph {
                 (unitString.contains("checkPermission"));
     }
 
-    private String getPermissionString(String unitString) {
 
-        String permissionString = "";
-        if (unitString.contains("android.permission")) {
-            int i = unitString.indexOf("android.permission");
-            try {
-                String[] tokens = unitString.substring(i, unitString.length() - 1).split(" ");
-                permissionString = tokens[0].trim();
-            } catch (Exception e) {
-                writeResultToFile(appPackageName + "\t" + e.getMessage());
-            }
-        }
-
-        return permissionString;
-    }
 
     public String getAppPackageName() {
         return appPackageName;
@@ -522,7 +468,7 @@ public class ParseCallGraph {
         Iterable<SootMethod> checkOrRequestPermissionCallee;
         boolean isPermissionRequested = false;
         String methodActiveBody = targetMethod.getActiveBody().toString();
-        if (findPermissionRequest(methodActiveBody)) {
+        if (PermissionUtil.findPermissionRequest(methodActiveBody)) {
             isPermissionRequested = true;
         } else {
             while (uit.hasNext()) {
@@ -574,7 +520,7 @@ public class ParseCallGraph {
             String activeBody = null;
             try {
                 activeBody = sootMethod.getActiveBody().toString();
-                if (findPermissionRequest(activeBody)) {
+                if (PermissionUtil.findPermissionRequest(activeBody)) {
                     return true;
                 }
             } catch (Exception e) {

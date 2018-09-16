@@ -18,14 +18,6 @@ public class FlowDroidCallGraph {
     private String androidPlatform;
 
 
-//    public static FlowDroidCallGraph getInstance(String androidPlatform, String apkName) {
-//
-//        if (flowDroidCallGraph == null)
-//            flowDroidCallGraph = new FlowDroidCallGraph(androidPlatform, apkName);
-//
-//        return flowDroidCallGraph;
-//    }
-
     public FlowDroidCallGraph(String androidPlatform, String apkName) {
         init(androidPlatform, apkName);
     }
@@ -51,7 +43,11 @@ public class FlowDroidCallGraph {
         Options.v().setPhaseOption("cg.spark", "on");
         Options.v().setPhaseOption("wjap.cgg", "show-lib-meths:true");
         Options.v().setPhaseOption("jb", "use-original-names:true");
-        Scene.v().loadNecessaryClasses();
+        try {
+            Scene.v().loadNecessaryClasses();
+        } catch (AndroidPlatformException e) {
+            return null;
+        }
         System.out.println("Constructing call graph...");
         PackManager.v().runPacks();
         setupApplication.constructCallgraph();

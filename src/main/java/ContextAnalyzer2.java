@@ -4,6 +4,8 @@ import main.java.Permission.PSCoutPermissionMap;
 import main.java.Permission.Permission;
 import main.java.Util.CommonUtil;
 import main.java.Util.ManifestUtil;
+import main.java.Util.OutputUtil;
+import main.java.debug.Log;
 import soot.SootMethod;
 import soot.jimple.infoflow.android.SetupApplication;
 import soot.jimple.infoflow.android.data.parsers.PermissionMethodParser;
@@ -34,7 +36,7 @@ public class ContextAnalyzer2 {
     private ApkProcessingStatistic statistic;
 
     public ContextAnalyzer2(String androidPlatform, String appToAnalyze, String datasetFile) {
-        System.out.println("Constructor: ContextAnalyzer\n\n");
+        Log.d(appToAnalyze,"Constructor: ContextAnalyzer....", true);
         this.datasetFile = datasetFile;
         finalPermissionMapping = new HashMap<>();
         finalRequestMapping = new HashMap<>();
@@ -43,75 +45,77 @@ public class ContextAnalyzer2 {
     }
 
     private void initializeAnalyzer(String androidPlatform, String appToAnalyze) {
-        System.out.println("Initializing: ContextAnalyzer\n\n");
+        Log.d(appToAnalyze, "Initializing: ContextAnalyzer...", true);
         permissionHashMap = PSCoutPermissionMap.getInstance().loadPermissionMapping("resources/pscout/pscout411.txt");
         permissionSet = permissionHashMap.values();
         flowDroidCallGraph = new FlowDroidCallGraph(androidPlatform, appToAnalyze);
         parseCallGraph = new ParseCallGraph();
-        CommonUtil.deleteFileIfExists("time_stats.txt");
+        OutputUtil.initOutputFiles(datasetFile);
         try {
             CommonUtil.write("app\tfileSize\tcallGraphGenerationTime\tlistingMethodsTime" +
                     "\tcontextExtractionTime\tnumberOfClasses\tnumberOfMethods", "time_stats.txt");
         } catch (IOException e) {
             e.printStackTrace();
         }
-        System.out.println("Initialization done");
+        Log.d(appToAnalyze, "Initialization done", true);
     }
 
     private boolean processCallGraph(String apkName) {
         if (flowDroidCallGraph != null) {
-            System.out.println("Starting Flowdroid...");
+            Log.d(apkName,"Starting FlowDroid...", true);
 
-            startTime = System.currentTimeMillis();
-            CallGraph callGraph = flowDroidCallGraph.getCallGraph(apkName);
-            if (callGraph == null) {
+            if(initCallGraph(apkName)) {
+                extractMethodList(apkName);
+                return true;
+            } else {
                 return false;
             }
-            parseCallGraph.init().setCallGraph(callGraph);
-            endTime = System.currentTimeMillis();
-            statistic.setCallGraphGenerationTime(CommonUtil.getTimeDifferenceInSeconds(startTime, endTime));
-            System.out.println("CallGraph initialization " +
-                    "by FlowDroid took: " + statistic.getCallGraphGenerationTime() + " Seconds");
-
-            parseCallGraph.setAppPackageName(appMetaData.getPackageName());
-
-            System.out.println("Listing methods inside the callgraph...");
-            startTime = System.currentTimeMillis();
-            listOfAppMethods = parseCallGraph.listMethods();
-            endTime = System.currentTimeMillis();
-            statistic.setNumberOfMethods(listOfAppMethods.size());
-            statistic.setListingMethodsTime(CommonUtil.getTimeDifferenceInSeconds(startTime, endTime));
-            System.out.println("CallGraph initialization took: " + statistic.getListingMethodsTime() + " Seconds");
-
-            return true;
         } else {
             return false;
         }
     }
 
+    private void extractMethodList(String apkName) {
+        Log.d(apkName,"Listing methods inside the callgraph...", true);
+        startTime = System.currentTimeMillis();
+        listOfAppMethods = parseCallGraph.listMethods();
+        endTime = System.currentTimeMillis();
+        statistic.setNumberOfMethods(listOfAppMethods.size());
+        statistic.setListingMethodsTime(CommonUtil.getTimeDifferenceInSeconds(startTime, endTime));
+        Log.d(apkName, "CallGraph initialization took: " + statistic.getListingMethodsTime() + " Seconds"
+                , true);
+    }
+
+    private boolean initCallGraph(String apkName) {
+        startTime = System.currentTimeMillis();
+        CallGraph callGraph = flowDroidCallGraph.getCallGraph(apkName);
+        if (callGraph == null) {
+            return false;
+        }
+        parseCallGraph.init().setCallGraph(callGraph);
+        endTime = System.currentTimeMillis();
+        statistic.setCallGraphGenerationTime(CommonUtil.getTimeDifferenceInSeconds(startTime, endTime));
+        parseCallGraph.setAppPackageName(appMetaData.getPackageName());
+        Log.d(apkName,"CallGraph initialization " +
+                "by FlowDroid took: " + statistic.getCallGraphGenerationTime() + " Seconds", true);
+        return true;
+    }
+
 
     public void start(String apkName) {
-        System.out.println("Starting analysis..");
+        Log.d(apkName,"Starting analysis..", true);
         if (updateAppMetadata(apkName) && processCallGraph(apkName)) {
-            System.out.println("Extracting contexts...");
+            Log.d(apkName,"Extracting contexts.....", true);
             startTime = System.currentTimeMillis();
             extractPermissionUsageContext();
             endTime = System.currentTimeMillis();
             statistic.setContextExtractionTime(CommonUtil.getTimeDifferenceInSeconds(startTime, endTime));
-            System.out.println("Context Extraction took: " + statistic.getContextExtractionTime() + " Seconds");
-            writeUsageOutput();
-            writeRequestOutput();
-            writeTimeStat();
+            Log.d(apkName,"Context Extraction took: " + statistic.getContextExtractionTime() + " Seconds", true);
+            OutputUtil.writeUsageOutput(finalPermissionMapping, appMetaData, datasetFile);
+            OutputUtil.writeRequestOutput(finalRequestMapping, appMetaData, datasetFile);
+            OutputUtil.writeTimeStat(statistic, datasetFile);
         } else {
-            System.out.println("Callgraph generation failed for: " + appMetaData.getPackageName());
-        }
-    }
-
-    private void writeTimeStat() {
-        try {
-            CommonUtil.write(statistic.toString(), "time_stats.txt");
-        } catch (IOException e) {
-            e.printStackTrace();
+            Log.d(apkName,"Callgraph generation failed for: " + appMetaData.getPackageName(), true);
         }
     }
 
@@ -125,65 +129,6 @@ public class ContextAnalyzer2 {
             return true;
         } catch (NullPointerException e) {
             return false;
-        }
-    }
-
-    private void writeRequestOutput() {
-        Iterable<RequestMethodContext> values = finalRequestMapping.values();
-        for (RequestMethodContext methodContext :
-                values) {
-            String className = methodContext.getClassName();
-            String methodName = methodContext.getMethodName();
-            String permission = methodContext.getPermission();
-            String eventType = "";//methodContext.getEventType();
-            String visibilityType = methodContext.getVisibilityType().toString();
-
-            for (CallerMethod callerMethod :
-                    methodContext.getCallerMethodList()) {
-                eventType = eventType + callerMethod.getMethodName() + ", " + callerMethod.getVisibilityType() + ";";
-            }
-            String finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName() + "\t" + appMetaData.getVersionCode() + "\t" + appMetaData.getTargetSdk() + "\t" +
-                    className + "\t" + methodName + "\t" + permission + "\t" + visibilityType + "\t" + eventType + "\t" + appMetaData.getSha256();
-            try {
-                writeResultToFile(finalString, datasetFile + "_output_request.csv");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    private void writeUsageOutput() {
-        Iterable<MethodContext> values = finalPermissionMapping.values();
-        for (MethodContext methodContext :
-                values) {
-            String className = methodContext.getClassName();
-            String methodName = methodContext.getMethodName();
-            String permission = methodContext.getPermission().getPermission();
-            String invokedMethod = methodContext.getPermission().getMethodSignature();
-            String eventType = "";//methodContext.getEventType();
-            String visibilityType = methodContext.getVisibilityType().toString();
-            String onRequestPermissionResult = "false";
-            for (CallerMethod callerMethod :
-                    methodContext.getCallerMethodList()) {
-                String sign = callerMethod.getMethodName();
-                if (sign.contains("onRequestPermissionsResult") || sign.contains("(int,java.lang.String[],int[])")) {
-                    onRequestPermissionResult = "true";
-                }
-                eventType = eventType + callerMethod.getMethodName() + ", " + callerMethod.getVisibilityType() + ";";
-
-            }
-            if (methodContext.toString().contains("onRequestPermissionsResult")
-                    || methodContext.toString().contains("(int,java.lang.String[],int[])")) {
-                onRequestPermissionResult = "true";
-            }
-            String finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName() + "\t" + appMetaData.getVersionCode() + "\t" + appMetaData.getTargetSdk() + "\t" +
-                    className + "\t" + methodName + "\t" + permission + "\t" + invokedMethod + "\t" + visibilityType
-                    + "\t" + onRequestPermissionResult + "\t" + eventType + "\t" + appMetaData.getSha256();
-            try {
-                writeResultToFile(finalString, datasetFile + "_output_usage.csv");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
     }
 
@@ -225,14 +170,6 @@ public class ContextAnalyzer2 {
             MethodContext methodContext = parseCallGraph.extractMethodProperties(sootMethod, p);
             finalPermissionMapping.put(sootMethod.getSignature().concat(" " + p), methodContext);
         }
-    }
-
-
-    private void writeResultToFile(String s, String fileName)
-            throws IOException {
-        BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true));
-        writer.append(s).append("\n");
-        writer.close();
     }
 
 }

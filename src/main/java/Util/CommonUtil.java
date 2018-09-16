@@ -32,11 +32,5 @@ public class CommonUtil {
         }
     }
 
-    public static boolean deleteFileIfExists(String fileName) {
-        File file = new File(fileName);
-        if (file.exists()) {
-            return file.delete();
-        }
-        return false;
-    }
+
 }

@@ -68,7 +68,7 @@ public class MethodContext {
         return callerClassType;
     }
 
-    enum Caller {
+    public enum Caller {
         ACTIVITY,
         FRAGMENT,
         DIALOG,

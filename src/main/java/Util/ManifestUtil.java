@@ -1,16 +1,12 @@
 package main.java.Util;
 
 import main.java.AppMetaData;
-import main.java.error.Log;
+import main.java.debug.Log;
 import org.xmlpull.v1.XmlPullParserException;
 import soot.jimple.infoflow.android.manifest.ProcessManifest;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
-import java.util.zip.ZipException;
 
 public class ManifestUtil {
 
