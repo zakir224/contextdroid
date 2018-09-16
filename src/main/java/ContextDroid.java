@@ -2,33 +2,27 @@ package main.java;
 
 import com.google.common.base.Strings;
 import main.java.Util.CommonUtil;
+import main.java.Util.OutputUtil;
 
 import java.io.*;
 import java.util.*;
 
 public class ContextDroid {
 
-    public static final int RANGE = 10000;
     private final String apkName;
     private final String androidPlatform;
-    private final String folder;
-    private int startingPoint;
-    private int endPoint;
     ContextAnalyzer2 contextAnalyzer;
     private ArrayList<String> apkList;
 
-    public ContextDroid(String apkName, String androidPlatform, String folder, int startingPoint, int endPoint) {
+    public ContextDroid(String apkName, String androidPlatform) {
         this.apkName = apkName;
         this.androidPlatform = androidPlatform;
-        this.folder = folder;
-        this.startingPoint = startingPoint;
-        this.endPoint = endPoint;
         listFiles(apkName);
         initPermissionGroup();
     }
 
     public void start() {
-        if (Strings.isNullOrEmpty(apkName) || Strings.isNullOrEmpty(folder) || Strings.isNullOrEmpty(androidPlatform)) {
+        if (Strings.isNullOrEmpty(apkName) || Strings.isNullOrEmpty(androidPlatform)) {
             System.out.println("Error 404: empty apk, folder or platform path ");
             return;
         }
@@ -39,10 +33,11 @@ public class ContextDroid {
         }
 
         long start = System.currentTimeMillis();
-        contextAnalyzer = new ContextAnalyzer2(androidPlatform, apkList.get(0), this.folder);
+        contextAnalyzer = new ContextAnalyzer2(androidPlatform, apkList.get(0));
         for (int i = 0; i < apkList.size(); i++) {
-            contextAnalyzer.start(apkList.get(i));
-            writeResultToFile(folder+ "\t" + apkList.get(i) + "\t" + i);
+            String apk = apkList.get(i);
+            contextAnalyzer.start(apk);
+            writeResultToFile(OutputUtil.getFolderPath(apk)+ "\t" + apk + "\t" + i);
         }
         long end = System.currentTimeMillis();
         System.out.println("Analyzed: "

@@ -21,18 +21,19 @@ public class ManifestUtil {
         ArrayList<String> permissions = new ArrayList<>();
         try {
             processManifest = new ProcessManifest(apkFilePath);
-        } catch (XmlPullParserException | IOException e) {
+            appMetaData.setPackageName(processManifest.getPackageName());
+            appMetaData.setVersionCode(processManifest.getVersionCode());
+            appMetaData.setVersionName(processManifest.getVersionName());
+            appMetaData.setTargetSdk(processManifest.targetSdkVersion());
+            appMetaData.setMinSdk(processManifest.getMinSdkVersion());
+            appMetaData.setSha256(StringUtil.extractSha256FromFilePath(apkFilePath));
+            appMetaData.getPermissions().addAll(processManifest.getPermissions());
+        } catch (XmlPullParserException | IOException | ClassCastException e) {
             Log.e(apkFilePath, e.getMessage(), true);
             return null;
         }
 
-        appMetaData.setPackageName(processManifest.getPackageName());
-        appMetaData.setVersionCode(processManifest.getVersionCode());
-        appMetaData.setVersionName(processManifest.getVersionName());
-        appMetaData.setTargetSdk(processManifest.targetSdkVersion());
-        appMetaData.setMinSdk(processManifest.getMinSdkVersion());
-        appMetaData.setSha256(StringUtil.extractSha256FromFilePath(apkFilePath));
-        appMetaData.getPermissions().addAll(processManifest.getPermissions());
+
 
         return appMetaData;
     }

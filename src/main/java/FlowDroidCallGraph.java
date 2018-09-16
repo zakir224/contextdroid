@@ -1,5 +1,8 @@
 package main.java;
 
+import main.java.Util.CommonUtil;
+import main.java.Util.ManifestUtil;
+import main.java.debug.Log;
 import soot.*;
 import soot.dexpler.DexResolver;
 import soot.jimple.infoflow.android.SetupApplication;
@@ -46,13 +49,19 @@ public class FlowDroidCallGraph {
         try {
             Scene.v().loadNecessaryClasses();
         } catch (AndroidPlatformException e) {
+            Log.e(apkName,"AndroidPlatformException: " + apkName + e.getMessage(), true);
             return null;
         }
-        System.out.println("Constructing call graph...");
-        PackManager.v().runPacks();
-        setupApplication.constructCallgraph();
-        System.out.println("Call graph construction successful. Retrieving the callgraph..");
-        return Scene.v().getCallGraph();
+        Log.d(apkName,"Constructing call graph...", true);
+        try {
+            PackManager.v().runPacks();
+            setupApplication.constructCallgraph();
+            Log.d(apkName,"Call graph construction successful. Retrieving the callgraph..", true);
+            return Scene.v().getCallGraph();
+        } catch (ResolutionFailedException e) {
+            Log.e(apkName,"Resolution Failed for: " + apkName + e.getMessage(), true);
+            return null;
+        }
     }
 
     public CallGraph getCallGraph(String apkName) {
@@ -61,10 +70,10 @@ public class FlowDroidCallGraph {
             SetupApplication applicationAnalyser = getApplicationAnalyser(apkName);
             return constructCallGraph(applicationAnalyser, apkName);
         } catch (SootMethodRefImpl.ClassResolutionFailedException e) {
-            System.out.println("Loading classes from the apk failed: " + e.getMessage());
+            Log.e(apkName, "Loading classes from the apk failed: " + e.getMessage(), true);
             return null;
         } catch (NullPointerException e) {
-            System.out.println("NullPointedException: " + e.getMessage());
+            Log.e(apkName,"NullPointedException: " + e.getMessage(), true);
             return null;
         }
     }

@@ -10,8 +10,8 @@ public class OutputUtil {
 
     private static final String OUTPUT_USAGE = "_output_usage.csv";
     private static final String OUTPUT_REQUEST = "_output_request.csv";
-    private static final String OUTPUT_PERMISSION = "_permissions.csv";
-    private static final String OUTPUT_STAT = "_time_stats.csv";
+    private static final String OUTPUT_PERMISSION = "_permissions.txt";
+    private static final String OUTPUT_STAT = "_time_stats.txt";
 
     public static void writeRequestOutput(HashMap<String, RequestMethodContext> finalRequestMapping,
                                           AppMetaData appMetaData, String datasetFile) {
@@ -101,4 +101,21 @@ public class OutputUtil {
         return false;
     }
 
+    public static void intiStat(String datasetFile) {
+        try {
+            CommonUtil.write("app\tfileSize\tcallGraphGenerationTime\tlistingMethodsTime" +
+                    "\tcontextExtractionTime\tnumberOfClasses\tnumberOfMethods", datasetFile + OUTPUT_STAT);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static String getFolderPath(String appToAnalyze) {
+        File f = new File(appToAnalyze);
+        if(f.exists()) {
+            return f.getParent();
+        } else {
+            return null;
+        }
+    }
 }

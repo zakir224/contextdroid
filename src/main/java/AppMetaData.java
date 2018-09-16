@@ -29,7 +29,7 @@ public class AppMetaData {
     }
 
     public String getVersionName() {
-        return versionName;
+        return versionName != null ? versionName : "N/A";
     }
 
     public void setVersionName(String versionName) {

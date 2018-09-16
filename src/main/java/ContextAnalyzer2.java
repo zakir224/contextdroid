@@ -35,9 +35,9 @@ public class ContextAnalyzer2 {
     private long endTime;
     private ApkProcessingStatistic statistic;
 
-    public ContextAnalyzer2(String androidPlatform, String appToAnalyze, String datasetFile) {
+    public ContextAnalyzer2(String androidPlatform, String appToAnalyze) {
         Log.d(appToAnalyze,"Constructor: ContextAnalyzer....", true);
-        this.datasetFile = datasetFile;
+        this.datasetFile = OutputUtil.getFolderPath(appToAnalyze);
         finalPermissionMapping = new HashMap<>();
         finalRequestMapping = new HashMap<>();
 
@@ -51,12 +51,7 @@ public class ContextAnalyzer2 {
         flowDroidCallGraph = new FlowDroidCallGraph(androidPlatform, appToAnalyze);
         parseCallGraph = new ParseCallGraph();
         OutputUtil.initOutputFiles(datasetFile);
-        try {
-            CommonUtil.write("app\tfileSize\tcallGraphGenerationTime\tlistingMethodsTime" +
-                    "\tcontextExtractionTime\tnumberOfClasses\tnumberOfMethods", "time_stats.txt");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        OutputUtil.intiStat(datasetFile);
         Log.d(appToAnalyze, "Initialization done", true);
     }
 
