@@ -36,7 +36,7 @@ public class ContextDroid {
     private ApkProcessingStatistic statistic;
 
     public ContextDroid(String androidPlatform, String appToAnalyze) {
-        Log.d(appToAnalyze,"Constructor: ContextAnalyzer....", true);
+        Log.d(appToAnalyze,"Constructor: ContextDroid....", true);
         this.datasetFile = OutputUtil.getFolderPath(appToAnalyze);
         finalPermissionMapping = new HashMap<>();
         finalRequestMapping = new HashMap<>();
@@ -45,7 +45,7 @@ public class ContextDroid {
     }
 
     private void initializeAnalyzer(String androidPlatform, String appToAnalyze) {
-        Log.d(appToAnalyze, "Initializing: ContextAnalyzer...", true);
+        Log.d(appToAnalyze, "Initializing: ContextDroid...", true);
         permissionHashMap = PSCoutPermissionMap.getInstance().loadPermissionMapping("resources/pscout/pscout411.txt");
         permissionSet = permissionHashMap.values();
         flowDroidCallGraph = new FlowDroidCallGraph(androidPlatform, appToAnalyze);
