@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Class-Path: soot-infoflow-android-classes.jar soot-infoflow-classes.ja
+ r soot-infoflow-cmd-jar-with-dependencies.jar soot-infoflow-summaries
+ -classes.jar
+Main-Class: 
+

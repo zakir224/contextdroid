@@ -7,6 +7,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 
 public class CommonUtil {
 
@@ -32,5 +33,16 @@ public class CommonUtil {
         }
     }
 
-
+    public static ArrayList<String> listApkFiles(String apkName) {
+        ArrayList<String> apkList = new ArrayList<>();
+        File[] files = new File(apkName).listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile() && file.getName().contains(".apk")) {
+                    apkList.add(file.getAbsolutePath());
+                }
+            }
+        }
+        return apkList;
+    }
 }

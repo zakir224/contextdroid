@@ -113,7 +113,7 @@ public class OutputUtil {
     public static String getFolderPath(String appToAnalyze) {
         File f = new File(appToAnalyze);
         if(f.exists()) {
-            return f.getParent();
+            return f.getParent() + "/";
         } else {
             return null;
         }
