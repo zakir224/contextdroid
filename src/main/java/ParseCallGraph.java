@@ -59,7 +59,10 @@ public class ParseCallGraph {
         if (sources.hasNext()) {
             try {
                 if (!isSelf && !sootMethod.getSignature().contains("dummyMain")) {
-                    methodContext.getCallerMethodList().add(getCallerInfo(sootMethod));
+                    CallerMethod callerInfo = getCallerInfo(sootMethod);
+                    if(callerInfo.getVisibilityType() != CallerType.CUSTOM) {
+                        methodContext.getCallerMethodList().add(callerInfo);
+                    }
                 }
                 retrieveCallers((SootMethod) sources.next(), methodContext, false);
             } catch (StackOverflowError e) {
@@ -78,7 +81,10 @@ public class ParseCallGraph {
 
         if (sources.hasNext()) {
             if (!isSelf && !sootMethod.getSignature().contains("dummyMain")) {
-                methodContext.getCallerMethodList().add(getCallerInfo(sootMethod));
+                CallerMethod callerInfo = getCallerInfo(sootMethod);
+                if(callerInfo.getVisibilityType() != CallerType.CUSTOM) {
+                    methodContext.getCallerMethodList().add(callerInfo);
+                }
             }
             retrieveRequestCallers((SootMethod) sources.next(), methodContext, false);
 
@@ -88,19 +94,33 @@ public class ParseCallGraph {
         }
     }
 
+    private boolean callerExists(CallerMethod callerInfo, List<CallerMethod> callerMethodList) {
+        for (CallerMethod callerMethod :
+                callerMethodList) {
+            if (callerMethod.getPackageName().equals(callerInfo.getPackageName()) && callerMethod.getClassName().equals(callerInfo.getClassName())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private CallerMethod getCallerInfo(SootMethod sootMethod) {
         CallerMethod callerMethod = null;
         try {
             //String eventType = extractEventInfo(sootMethod);
             String className = sootMethod.getDeclaringClass().toString();
             String methodName = sootMethod.getSignature();
-            MethodContext.Caller visibilityType = getComponentType(sootMethod.getDeclaringClass());
+            String packageName = sootMethod.getDeclaringClass().getPackageName();
+            CallerType visibilityType = getComponentType(sootMethod.getDeclaringClass());
+            if(visibilityType == CallerType.CUSTOM) {
+                visibilityType = checkIfButtonClick(sootMethod);
+            }
+
 
             callerMethod = new CallerMethod();
-
             callerMethod.setClassName(className);
             callerMethod.setMethodName(methodName);
-            //callerMethod.setEventType(eventType);
+            callerMethod.setPackageName(packageName);
             callerMethod.setVisibilityType(visibilityType);
         } catch (Exception e) {
             writeResultToFile(appPackageName + "\t" + e.getMessage());
@@ -276,7 +296,10 @@ public class ParseCallGraph {
         boolean isLibraryMethod = false;
         SootClass declaringClass = sootMethod.getDeclaringClass();
 
-        MethodContext.Caller classType = getComponentType(declaringClass);
+        CallerType classType = getComponentType(declaringClass);
+        if(classType == CallerType.CUSTOM) {
+            classType = checkIfButtonClick(sootMethod);
+        }
         String packageName = declaringClass.getPackageName();
         String name = sootMethod.getName();
         String className = declaringClass.getName();
@@ -290,7 +313,6 @@ public class ParseCallGraph {
         methodContext.setPackageName(packageName);
         methodContext.setClassName(className);
         methodContext.setMethodName(name);
-        //methodContext.setEventType(eventType);
         methodContext.setLibaryMethod(isLibraryMethod);
         methodContext.setPermission(permission);
 
@@ -305,7 +327,10 @@ public class ParseCallGraph {
             boolean isLibraryMethod = false;
             SootClass declaringClass = sootMethod.getDeclaringClass();
 
-            MethodContext.Caller classType = getComponentType(declaringClass);
+            CallerType classType = getComponentType(declaringClass);
+            if(classType == CallerType.CUSTOM) {
+                classType = checkIfButtonClick(sootMethod);
+            }
             String packageName = declaringClass.getPackageName();
             String name = sootMethod.getName();
             String className = declaringClass.getName();
@@ -330,8 +355,8 @@ public class ParseCallGraph {
         return requestMethodContext;
     }
 
-    private MethodContext.Caller getComponentType(SootClass mClass) {
-        MethodContext.Caller classType;
+    private CallerType getComponentType(SootClass mClass) {
+        CallerType classType;
         classType = getClassType(mClass);
         while (classType == null && mClass.hasSuperclass()) {
             mClass = mClass.getSuperclass();
@@ -339,29 +364,37 @@ public class ParseCallGraph {
         }
 
         if (classType == null) {
-            classType = MethodContext.Caller.CUSTOM;
+            classType = CallerType.CUSTOM;
         }
 
         return classType;
     }
 
+    private CallerType checkIfButtonClick(SootMethod method) {
+        if(method.getSignature().contains("void onClick(android.view.View)")) {
+            return CallerType.ON_CLICK;
+        } else {
+            return CallerType.CUSTOM;
+        }
+    }
 
-    private MethodContext.Caller getClassType(SootClass sootClass) {
+
+    private CallerType getClassType(SootClass sootClass) {
         if (sootClass != null && sootClass.getName() != null) {
             if (sootClass.getName().contains("Activity")) {
-                return MethodContext.Caller.ACTIVITY;
+                return CallerType.ACTIVITY;
             } else if (sootClass.getName().contains("Fragment")) {
-                return MethodContext.Caller.FRAGMENT;
+                return CallerType.FRAGMENT;
             } else if (sootClass.getName().contains("DialogFragment")) {
-                return MethodContext.Caller.DIALOG;
+                return CallerType.DIALOG;
             } else if (sootClass.getName().contains("android.app.Service")) {
-                return MethodContext.Caller.SERVICE;
+                return CallerType.SERVICE;
             } else if (sootClass.getName().contains("BroadcastReceiver")) {
-                return MethodContext.Caller.BROADCAST_RECEIVER;
+                return CallerType.BROADCAST_RECEIVER;
             } else if (sootClass.getName().contains("AsyncTask")) {
-                return MethodContext.Caller.ASYNC_TASK;
+                return CallerType.ASYNC_TASK;
             } else if (checkIfFragment(sootClass.getMethods())) {
-                return MethodContext.Caller.FRAGMENT;
+                return CallerType.FRAGMENT;
             } else {
                 return null;
             }

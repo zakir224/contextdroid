@@ -1,13 +1,12 @@
 package main.java;
 
-import main.java.MethodContext.Caller;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class RequestMethodContext {
 
-    private Caller visibilityType;
+    private CallerType visibilityType;
     private String callerClassType;
     private String packageName;
     private String methodName;
@@ -56,7 +55,7 @@ public class RequestMethodContext {
         callerMethodList = new ArrayList<>();
     }
 
-    public RequestMethodContext(Caller visibilityType, String packageName, String methodName, String className, String permission) {
+    public RequestMethodContext(CallerType visibilityType, String packageName, String methodName, String className, String permission) {
         this.visibilityType = visibilityType;
         this.packageName = packageName;
         this.methodName = methodName;
@@ -73,11 +72,11 @@ public class RequestMethodContext {
     }
 
 
-    public Caller getVisibilityType() {
+    public CallerType getVisibilityType() {
         return visibilityType;
     }
 
-    public void setVisibilityType(Caller visibilityType) {
+    public void setVisibilityType(CallerType visibilityType) {
         this.visibilityType = visibilityType;
     }
 

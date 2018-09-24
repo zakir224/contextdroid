@@ -2,7 +2,7 @@ package main.java;
 
 public class CallerMethod {
 
-    private MethodContext.Caller visibilityType;
+    private CallerType visibilityType;
     private String packageName;
     private String methodName;
     private String className;
@@ -41,11 +41,11 @@ public class CallerMethod {
         this.eventType = eventType;
     }
 
-    public MethodContext.Caller getVisibilityType() {
+    public CallerType getVisibilityType() {
         return visibilityType;
     }
 
-    public void setVisibilityType(MethodContext.Caller visibilityType) {
+    public void setVisibilityType(CallerType visibilityType) {
         this.visibilityType = visibilityType;
     }
 }

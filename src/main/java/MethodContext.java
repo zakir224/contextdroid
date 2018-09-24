@@ -7,7 +7,7 @@ import java.util.List;
 
 public class MethodContext {
 
-    private Caller visibilityType;
+    private CallerType visibilityType;
     private String packageName;
     private String methodName;
     private String className;
@@ -68,21 +68,22 @@ public class MethodContext {
         return callerClassType;
     }
 
-    public enum Caller {
-        ACTIVITY,
-        FRAGMENT,
-        DIALOG,
-        SERVICE,
-        BROADCAST_RECEIVER,
-        ASYNC_TASK,
-        CUSTOM
-    }
+//    public enum Caller {
+//        ACTIVITY,
+//        FRAGMENT,
+//        DIALOG,
+//        SERVICE,
+//        BROADCAST_RECEIVER,
+//        ASYNC_TASK,
+//        CUSTOM,
+//        ON_CLICK,
+//    }
 
     public MethodContext() {
         callerMethodList = new ArrayList<>();
     }
 
-    public MethodContext(Caller visibilityType, String packageName, String methodName, String className, Permission permission) {
+    public MethodContext(CallerType visibilityType, String packageName, String methodName, String className, Permission permission) {
         this.visibilityType = visibilityType;
         this.packageName = packageName;
         this.methodName = methodName;
@@ -114,7 +115,7 @@ public class MethodContext {
     private String findCallers() {
         String canBeCalledFrom = "";
         for (CallerMethod callerMethod : callerMethodList) {
-            if (callerMethod.getVisibilityType() != Caller.CUSTOM)
+            if (callerMethod.getVisibilityType() != CallerType.CUSTOM)
                 canBeCalledFrom = canBeCalledFrom.concat(" ") +
                         callerMethod.getClassName() + " " + callerMethod.getVisibilityType().toString();
         }
@@ -122,11 +123,11 @@ public class MethodContext {
     }
 
 
-    public Caller getVisibilityType() {
+    public CallerType getVisibilityType() {
         return visibilityType;
     }
 
-    public void setVisibilityType(Caller visibilityType) {
+    public void setVisibilityType(CallerType visibilityType) {
         this.visibilityType = visibilityType;
     }
 

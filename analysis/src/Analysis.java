@@ -131,7 +131,7 @@ public class Analysis {
             HashMap<String, HashMap<String, String>> hashMapRequest = permissionRequests.get(app);
             HashMap<String, HashMap<String, String>> hashMapUsage = permissionUsage.get(app);
 
-            if (hashMapRequest.size() == 0 || hashMapUsage.size() == 0) {
+            if (hashMapRequest.size() == 0 && hashMapUsage.size() == 0) {
                 try {
                     writeResultToFile(app + printDangerous(appPermissions.get(app)), "24feb/" + "failure.txt");
                     getdangerousPermissionGroup(appPermissions.get(app));

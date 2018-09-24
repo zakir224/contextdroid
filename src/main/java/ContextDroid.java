@@ -7,15 +7,9 @@ import main.java.Util.ManifestUtil;
 import main.java.Util.OutputUtil;
 import main.java.debug.Log;
 import soot.SootMethod;
-import soot.jimple.infoflow.android.SetupApplication;
-import soot.jimple.infoflow.android.data.parsers.PermissionMethodParser;
-import soot.jimple.infoflow.android.manifest.ProcessManifest;
 import soot.jimple.toolkits.callgraph.CallGraph;
 //import sun.plugin2.util.SystemUtil;
 
-import java.io.BufferedWriter;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.*;
 
 
@@ -109,8 +103,10 @@ public class ContextDroid {
             OutputUtil.writeUsageOutput(finalPermissionMapping, appMetaData, datasetFile);
             OutputUtil.writeRequestOutput(finalRequestMapping, appMetaData, datasetFile);
             OutputUtil.writeTimeStat(statistic, datasetFile);
+            finalPermissionMapping.clear();
+            finalRequestMapping.clear();
         } else {
-            Log.d(apkName,"Callgraph generation failed for: " + appMetaData.getPackageName(), true);
+            Log.d(apkName,"CallGraph generation failed for: " + appMetaData.getPackageName(), true);
         }
     }
 
