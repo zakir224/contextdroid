@@ -8,10 +8,10 @@ import java.util.HashMap;
 
 public class OutputUtil {
 
-    private static final String OUTPUT_USAGE = "_output_usage.csv";
-    private static final String OUTPUT_REQUEST = "_output_request.csv";
-    private static final String OUTPUT_PERMISSION = "_permissions.txt";
-    private static final String OUTPUT_STAT = "_time_stats.txt";
+    private static final String OUTPUT_USAGE = "output_usage.csv";
+    private static final String OUTPUT_REQUEST = "output_request.csv";
+    private static final String OUTPUT_PERMISSION = "permissions.txt";
+    private static final String OUTPUT_STAT = "time_stats.txt";
 
     public static void writeRequestOutput(HashMap<String, RequestMethodContext> finalRequestMapping,
                                           AppMetaData appMetaData, String datasetFile) {

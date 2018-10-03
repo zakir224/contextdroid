@@ -8,6 +8,8 @@ public class AppMetaData {
     private int versionCode;
     private String versionName;
     private int targetSdk;
+    private String mainActivity;
+    private ArrayList<String> services;
     private int minSdk;
     private String sha256;
     private ArrayList<String> permissions;
@@ -70,5 +72,21 @@ public class AppMetaData {
 
     public void setMinSdk(int minSdk) {
         this.minSdk = minSdk;
+    }
+
+    public String getMainActivity() {
+        return mainActivity;
+    }
+
+    public void setMainActivity(String mainActivity) {
+        this.mainActivity = mainActivity;
+    }
+
+    public ArrayList<String> getServices() {
+        return services;
+    }
+
+    public void setServices(ArrayList<String> services) {
+        this.services = services;
     }
 }

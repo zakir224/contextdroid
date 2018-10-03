@@ -23,17 +23,22 @@ public class ContextDroid {
     private ArrayList<SootMethod> listOfAppMethods;
     private HashMap<String, MethodContext> finalPermissionMapping;
     private HashMap<String, RequestMethodContext> finalRequestMapping;
+    private HashMap<String, MethodContext> rationale;
     private FlowDroidCallGraph flowDroidCallGraph;
     private AppMetaData appMetaData;
     private long startTime;
     private long endTime;
     private ApkProcessingStatistic statistic;
+    private HashMap<String, ArrayList<String>> permissionToRationale;
+    private HashMap<String, String> serviceInitiator;
 
     public ContextDroid(String androidPlatform, String appToAnalyze) {
         Log.d(appToAnalyze,"Constructor: ContextDroid....", true);
         this.datasetFile = OutputUtil.getFolderPath(appToAnalyze);
         finalPermissionMapping = new HashMap<>();
         finalRequestMapping = new HashMap<>();
+        permissionToRationale = new HashMap<>();
+        serviceInitiator = new HashMap<>();
 
         initializeAnalyzer(androidPlatform, appToAnalyze);
     }
@@ -127,6 +132,7 @@ public class ContextDroid {
         for (SootMethod method :
                 listOfAppMethods) {
             checkPermission(method);
+            getServiceInitiator(method);
             extractPermissionRequest(method);
         }
     }
@@ -137,7 +143,6 @@ public class ContextDroid {
             String methodBody = sootMethod.getActiveBody().toString();
 
             for (Permission s : permissionSet) {
-                //extractRationale(sootMethod);
                 extractPermissionUsage(s, methodBody, sootMethod);
             }
         } catch (Exception e) {
@@ -145,14 +150,25 @@ public class ContextDroid {
         }
     }
 
-    private void extractRationale(SootMethod sootMethod) {
-        parseCallGraph.extractRationale(sootMethod);
+    private void extractRationale(SootMethod sootMethod, String permission) {
+        String s = sootMethod.getActiveBody().toString();
+        if(parseCallGraph.checksRationale(s)) {
+            System.out.println("Found in :" + sootMethod.getSignature() + " " + permission);
+            if(permissionToRationale.containsKey(permission)) {
+                permissionToRationale.get(permission).add(sootMethod.getSignature());
+            } else {
+                ArrayList<String> list = new ArrayList<>();
+                list.add(sootMethod.getSignature());
+                permissionToRationale.put(permission, list);
+            }
+        }
     }
 
     private void extractPermissionRequest(SootMethod sootMethod) {
         RequestMethodContext requestMethodContext = parseCallGraph.extractPermissionCheckAndRequest(sootMethod);
         if (requestMethodContext != null && !finalRequestMapping.containsKey(requestMethodContext.toString())) {
             finalRequestMapping.put(sootMethod.getSignature(), requestMethodContext);
+            extractRationale(sootMethod,requestMethodContext.getPermission());
         }
     }
 
@@ -161,6 +177,19 @@ public class ContextDroid {
             MethodContext methodContext = parseCallGraph.extractMethodProperties(sootMethod, p);
             finalPermissionMapping.put(sootMethod.getSignature().concat(" " + p), methodContext);
         }
+    }
+
+    private void getServiceInitiator(SootMethod sootMethod) {
+        String s = sootMethod.getActiveBody().toString();
+        if(s.contains("startService(android.content.Intent)")) {
+            s = s.replace("/",".");
+            for (String service : appMetaData.getServices()) {
+                if(s.contains(service)) {
+                    serviceInitiator.put(service, sootMethod.getSignature());
+                }
+            }
+        }
+
     }
 
 }

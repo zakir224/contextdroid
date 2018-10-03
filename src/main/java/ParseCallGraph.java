@@ -8,7 +8,6 @@ import soot.jimple.infoflow.solver.cfg.InfoflowCFG;
 import soot.jimple.toolkits.callgraph.CallGraph;
 import soot.jimple.toolkits.callgraph.Sources;
 import soot.toolkits.graph.DirectedGraph;
-import soot.util.Chain;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -60,7 +59,7 @@ public class ParseCallGraph {
             try {
                 if (!isSelf && !sootMethod.getSignature().contains("dummyMain")) {
                     CallerMethod callerInfo = getCallerInfo(sootMethod);
-                    if(callerInfo.getVisibilityType() != CallerType.CUSTOM) {
+                    if (callerInfo.getVisibilityType() != CallerType.CUSTOM) {
                         methodContext.getCallerMethodList().add(callerInfo);
                     }
                 }
@@ -82,7 +81,7 @@ public class ParseCallGraph {
         if (sources.hasNext()) {
             if (!isSelf && !sootMethod.getSignature().contains("dummyMain")) {
                 CallerMethod callerInfo = getCallerInfo(sootMethod);
-                if(callerInfo.getVisibilityType() != CallerType.CUSTOM) {
+                if (callerInfo.getVisibilityType() != CallerType.CUSTOM) {
                     methodContext.getCallerMethodList().add(callerInfo);
                 }
             }
@@ -112,7 +111,7 @@ public class ParseCallGraph {
             String methodName = sootMethod.getSignature();
             String packageName = sootMethod.getDeclaringClass().getPackageName();
             CallerType visibilityType = getComponentType(sootMethod.getDeclaringClass());
-            if(visibilityType == CallerType.CUSTOM) {
+            if (visibilityType == CallerType.CUSTOM) {
                 visibilityType = checkIfButtonClick(sootMethod);
             }
 
@@ -297,7 +296,7 @@ public class ParseCallGraph {
         SootClass declaringClass = sootMethod.getDeclaringClass();
 
         CallerType classType = getComponentType(declaringClass);
-        if(classType == CallerType.CUSTOM) {
+        if (classType == CallerType.CUSTOM) {
             classType = checkIfButtonClick(sootMethod);
         }
         String packageName = declaringClass.getPackageName();
@@ -328,7 +327,7 @@ public class ParseCallGraph {
             SootClass declaringClass = sootMethod.getDeclaringClass();
 
             CallerType classType = getComponentType(declaringClass);
-            if(classType == CallerType.CUSTOM) {
+            if (classType == CallerType.CUSTOM) {
                 classType = checkIfButtonClick(sootMethod);
             }
             String packageName = declaringClass.getPackageName();
@@ -371,7 +370,7 @@ public class ParseCallGraph {
     }
 
     private CallerType checkIfButtonClick(SootMethod method) {
-        if(method.getSignature().contains("void onClick(android.view.View)")) {
+        if (method.getSignature().contains("void onClick(android.view.View)")) {
             return CallerType.ON_CLICK;
         } else {
             return CallerType.CUSTOM;
@@ -464,7 +463,6 @@ public class ParseCallGraph {
     }
 
 
-
     private boolean findPermissionCheck(String unitString) {
         return (unitString.contains("android.support.v4.content.ContextCompat")
                 || unitString.contains("android.support.v4.content.PermissionChecker")
@@ -482,7 +480,6 @@ public class ParseCallGraph {
                 unitString.contains("checkSelfPermission") ||
                 (unitString.contains("checkPermission"));
     }
-
 
 
     public String getAppPackageName() {
@@ -610,25 +607,39 @@ public class ParseCallGraph {
 
     }
 
-    public void extractRationale(SootMethod sootMethod) {
+    public boolean extractRationale(String methodActiveBody) {
 
-        String methodActiveBody = sootMethod.getActiveBody().toString();
-
-        if (methodActiveBody.contains("shouldShowRequestPermissionRationale")) {
-            //
+        String[] methodTokens = methodActiveBody.split("\n");
+        for (String line :
+                methodTokens) {
+            if (checksPermissionRationale(line)) {
+                if(showsRationale(methodActiveBody)) {
+                    return true;
+                }
+            }
         }
-//        while (uit.hasNext()) {
-//            Unit u = uit.next();
-//            if (u.branches()) {
-//                List<Unit> list = icfg.getSuccsOf(u);
-//                for (Unit unit :
-//                        list) {
-//                    //isPermissionRequested = getCheckRequest(unit, icfg, permission, targetMethod.getSignature());
-//                    findCalleesFragment(unit, icfg);
-//                }
-//            } else if (icfg.isCallStmt(u)) {
-//                findCalleesFragment(u, icfg);
-//            }
-//        }
+        return false;
+    }
+
+    public boolean checksRationale(String methodActiveBody) {
+        return methodActiveBody.contains("shouldShowRequestPermissionRationale")
+                || (methodActiveBody.contains("staticinvoke")
+                && methodActiveBody.contains("android.support.v4.app")
+                && methodActiveBody.contains("boolean")
+                && methodActiveBody.contains("(android.app.Activity,java.lang.String)"));
+    }
+
+    private boolean showsRationale(String methodActiveBody) {
+        if(methodActiveBody.contains("void show()") || methodActiveBody.contains("makeToast"))
+            return true;
+
+        return false;
+    }
+
+    private boolean checksPermissionRationale(String line) {
+        return line.contains("staticinvoke")
+                && line.contains("android.support.v4.app")
+                && line.contains("boolean")
+                && line.contains("(android.app.Activity,java.lang.String)");
     }
 }
