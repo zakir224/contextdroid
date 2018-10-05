@@ -2,6 +2,9 @@ package main.java.Util;
 
 import main.java.debug.Log;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 public class PermissionUtil {
 
     public static String getPermissionString(String app, String unitString) {
@@ -46,5 +49,9 @@ public class PermissionUtil {
 
                         )
         );
+    }
+
+    public static String removeDuplicatePermission(String s) {
+        return Arrays.stream(s.split(",")).distinct().collect(Collectors.joining(","));
     }
 }

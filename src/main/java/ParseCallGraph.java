@@ -6,6 +6,7 @@ import main.java.Util.PermissionUtil;
 import soot.*;
 import soot.jimple.infoflow.solver.cfg.InfoflowCFG;
 import soot.jimple.toolkits.callgraph.CallGraph;
+import soot.jimple.toolkits.callgraph.Edge;
 import soot.jimple.toolkits.callgraph.Sources;
 import soot.toolkits.graph.DirectedGraph;
 
@@ -108,7 +109,7 @@ public class ParseCallGraph {
         try {
             //String eventType = extractEventInfo(sootMethod);
             String className = sootMethod.getDeclaringClass().toString();
-            String methodName = sootMethod.getSignature();
+            String methodName = sootMethod.getName();
             String packageName = sootMethod.getDeclaringClass().getPackageName();
             CallerType visibilityType = getComponentType(sootMethod.getDeclaringClass());
             if (visibilityType == CallerType.CUSTOM) {
@@ -607,13 +608,13 @@ public class ParseCallGraph {
 
     }
 
-    public boolean extractRationale(String methodActiveBody) {
+    public boolean extractRationale(SootMethod method) {
 
-        String[] methodTokens = methodActiveBody.split("\n");
+        String[] methodTokens = method.getActiveBody().toString().split("\n");
         for (String line :
                 methodTokens) {
-            if (checksPermissionRationale(line)) {
-                if(showsRationale(methodActiveBody)) {
+            if (checksRationale(line)) {
+                if(showsRationale(method)) {
                     return true;
                 }
             }
@@ -621,7 +622,7 @@ public class ParseCallGraph {
         return false;
     }
 
-    public boolean checksRationale(String methodActiveBody) {
+    private boolean checksRationale(String methodActiveBody) {
         return methodActiveBody.contains("shouldShowRequestPermissionRationale")
                 || (methodActiveBody.contains("staticinvoke")
                 && methodActiveBody.contains("android.support.v4.app")
@@ -629,17 +630,21 @@ public class ParseCallGraph {
                 && methodActiveBody.contains("(android.app.Activity,java.lang.String)"));
     }
 
-    private boolean showsRationale(String methodActiveBody) {
-        if(methodActiveBody.contains("void show()") || methodActiveBody.contains("makeToast"))
+    private boolean showsRationale(SootMethod sootMethod) {
+        String activeBody = sootMethod.getActiveBody().toString();
+        if(activeBody.contains("void show()") || activeBody.contains("makeToast"))
             return true;
+        else {
+            Iterator sources = new Sources(callGraph.edgesOutOf(sootMethod));
+            while (sources.hasNext()) {
+                SootMethod callerMethod = (SootMethod) sources.next();
+                activeBody = callerMethod.getActiveBody().toString();
+                if(activeBody.contains("void show()") || activeBody.contains("makeToast"))
+                    return true;
+            }
+        }
 
         return false;
     }
 
-    private boolean checksPermissionRationale(String line) {
-        return line.contains("staticinvoke")
-                && line.contains("android.support.v4.app")
-                && line.contains("boolean")
-                && line.contains("(android.app.Activity,java.lang.String)");
-    }
 }

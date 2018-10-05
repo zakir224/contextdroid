@@ -1,9 +1,12 @@
 package main.java.Util;
 
 import main.java.*;
+import main.java.Permission.Permission;
+import main.java.debug.Log;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 
 public class OutputUtil {
@@ -11,6 +14,8 @@ public class OutputUtil {
     private static final String OUTPUT_USAGE = "output_usage.csv";
     private static final String OUTPUT_REQUEST = "output_request.csv";
     private static final String OUTPUT_PERMISSION = "permissions.txt";
+    private static final String OUTPUT_RATIONALE = "rationale.txt";
+    private static final String OUTPUT_SERVICE_INITIATOR = "service_initiator.txt";
     private static final String OUTPUT_STAT = "time_stats.txt";
 
     public static void writeRequestOutput(HashMap<String, RequestMethodContext> finalRequestMapping,
@@ -19,24 +24,118 @@ public class OutputUtil {
                 finalRequestMapping.values()) {
             String className = methodContext.getClassName();
             String methodName = methodContext.getMethodName();
-            String permission = methodContext.getPermission();
-            String eventType = "";//methodContext.getEventType();
+            String perm= methodContext.getPermission();
             String visibilityType = methodContext.getVisibilityType().toString();
+            perm = PermissionUtil.removeDuplicatePermission(perm.replace("\"",""));
+            String[] multiplePermission = perm.split(",");
 
-            for (CallerMethod callerMethod :
-                    methodContext.getCallerMethodList()) {
-                eventType = eventType + callerMethod.getMethodName() + ", " + callerMethod.getVisibilityType() + ";";
+            for (String permission: multiplePermission) {
+
+                String finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName()
+                        + "\t" + appMetaData.getVersionCode() + "\t" + className + "\t" + methodName + "\t" + permission + "\t"
+                        + visibilityType + "\t" + appMetaData.getSha256();
+
+                try {
+                    CommonUtil.write(finalString, datasetFile + OUTPUT_REQUEST);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+                for (CallerMethod callerMethod :
+                        methodContext.getCallerMethodList()) {
+                    finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName() + "\t" + appMetaData.getVersionCode() + "\t" +
+                            callerMethod.getClassName() + "\t" + callerMethod.getMethodName() + "\t" + permission + "\t" +
+                            callerMethod.getVisibilityType() + "\t" + appMetaData.getSha256();
+                    try {
+                        CommonUtil.write(finalString, datasetFile + OUTPUT_REQUEST);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+
             }
-            String finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName()
-                    + "\t" + appMetaData.getVersionCode() + "\t" + appMetaData.getTargetSdk() + "\t" +
-                    className + "\t" + methodName + "\t" + permission + "\t" + "" + "\t" +
-                    eventType + "\t" + appMetaData.getSha256();
-            try {
-                CommonUtil.write(finalString, datasetFile + OUTPUT_REQUEST);
-            } catch (IOException e) {
-                e.printStackTrace();
+
+        }
+    }
+
+    public static void writePermissions(AppMetaData appMetaData, String datasetFile) {
+
+        StringBuilder permissions = new StringBuilder();
+        for(String permission: appMetaData.getPermissions()) {
+            permissions.insert(0, permission + ";");
+        }
+
+        try {
+            String finalString = appMetaData.getPackageName() + "\t" +
+                    appMetaData.getVersionName() + "\t" +
+                    appMetaData.getVersionCode() + "\t" +
+                    permissions.toString() + "\t" +
+                    appMetaData.getMainActivity() + "\t" +
+                    appMetaData.getSha256();
+            CommonUtil.write(finalString, datasetFile + OUTPUT_PERMISSION);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    public static void writeRationale(AppMetaData appMetaData, HashMap<String, ArrayList<String>> rationale, String datasetFile) {
+
+
+        rationale.forEach((permission, rationaleContexts) ->{
+            for (String context : rationaleContexts) {
+                String finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName() + "\t" + appMetaData.getVersionCode() + "\t"
+                        + permission + "\t" + context;
+                try {
+                    CommonUtil.write(finalString, datasetFile + OUTPUT_RATIONALE);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
+    }
+
+    public static void moveAnalyzedApk(String sourceApk) {
+        File file = new File(sourceApk);
+        String newFolderPath = OutputUtil.getFolderPath(sourceApk) + "/done/";
+        boolean moveDirectoryCreated = new File(newFolderPath).exists();
+        if(!moveDirectoryCreated) {
+            moveDirectoryCreated = new File(newFolderPath).mkdirs();
+        }
+
+        if(moveDirectoryCreated) {
+            // renaming the file and moving it to a new location
+            if(file.renameTo
+                    (new File(newFolderPath + file.getName())))
+            {
+                // if file copied successfully then delete the original file
+                if(file.delete()) {
+                    Log.d(sourceApk, "File moved successfully.", true);
+                } else {
+                    Log.e(sourceApk, "Failed to move file.", true);
+                }
+            }
+            else
+            {
+                Log.e(sourceApk, "Failed to move file.", true);
             }
         }
+    }
+
+    public static void writeServiceInitiator(AppMetaData appMetaData, HashMap<String, String> serviceInitiator, String datasetFile) {
+
+
+        serviceInitiator.forEach((service, initiator) ->{
+                String finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName() + "\t" + appMetaData.getVersionCode() + "\t"
+                        + service + "\t" + initiator;
+                try {
+                    CommonUtil.write(finalString, datasetFile + OUTPUT_SERVICE_INITIATOR);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+        });
+
     }
 
     public static void writeUsageOutput(HashMap<String, MethodContext> finalPermissionMapping, AppMetaData appMetaData, String datasetFile) {
@@ -46,29 +145,29 @@ public class OutputUtil {
             String methodName = methodContext.getMethodName();
             String permission = methodContext.getPermission().getPermission();
             String invokedMethod = methodContext.getPermission().getMethodSignature();
-            String eventType = "";//methodContext.getEventType();
             String visibilityType = methodContext.getVisibilityType().toString();
             String onRequestPermissionResult = "false";
-            for (CallerMethod callerMethod :
-                    methodContext.getCallerMethodList()) {
-                String sign = callerMethod.getMethodName();
-                if (sign.contains("onRequestPermissionsResult") || sign.contains("(int,java.lang.String[],int[])")) {
-                    onRequestPermissionResult = "true";
-                }
-                eventType = eventType + callerMethod.getMethodName() + ", " + callerMethod.getVisibilityType() + ";";
 
-            }
-            if (methodContext.toString().contains("onRequestPermissionsResult")
-                    || methodContext.toString().contains("(int,java.lang.String[],int[])")) {
-                onRequestPermissionResult = "true";
-            }
-            String finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName() + "\t" + appMetaData.getVersionCode() + "\t" + appMetaData.getTargetSdk() + "\t" +
-                    className + "\t" + methodName + "\t" + permission + "\t" + invokedMethod + "\t" + visibilityType
-                    + "\t" + onRequestPermissionResult + "\t" + eventType + "\t" + appMetaData.getSha256();
+
+            String finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName() + "\t" + appMetaData.getVersionCode() + "\t"
+                    + className + "\t" + methodName + "\t" + permission + "\t" + invokedMethod
+                    + "\t" + visibilityType  + "\t" + appMetaData.getSha256();
             try {
                 CommonUtil.write(finalString, datasetFile + OUTPUT_USAGE);
             } catch (IOException e) {
                 e.printStackTrace();
+            }
+
+            for (CallerMethod callerMethod :
+                    methodContext.getCallerMethodList()) {
+                finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName() + "\t" + appMetaData.getVersionCode() + "\t"
+                        + callerMethod.getClassName() + "\t" + callerMethod.getMethodName() + "\t" + permission + "\t" + invokedMethod
+                        + "\t" + callerMethod.getVisibilityType() + "\t" + appMetaData.getSha256();
+                try {
+                    CommonUtil.write(finalString, datasetFile + OUTPUT_USAGE);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
     }
@@ -85,9 +184,11 @@ public class OutputUtil {
         deleteFilesIfExists(datasetFile);
     }
 
-    public static boolean deleteFilesIfExists(String datasetFile) {
+    private static boolean deleteFilesIfExists(String datasetFile) {
         deleteFile(datasetFile + OUTPUT_STAT);
         deleteFile(datasetFile + OUTPUT_PERMISSION);
+        deleteFile(datasetFile + OUTPUT_RATIONALE);
+        deleteFile(datasetFile + OUTPUT_SERVICE_INITIATOR);
         deleteFile(datasetFile + OUTPUT_USAGE);
         deleteFile(datasetFile + OUTPUT_REQUEST);
         return true;
@@ -118,4 +219,32 @@ public class OutputUtil {
             return null;
         }
     }
+
+    public static void moveOldStatIfExists(String sourceApk) {
+        File file = new File(sourceApk);
+        String newFolderPath = OutputUtil.getFolderPath(sourceApk) + "/old_stat/";
+        boolean moveDirectoryCreated = new File(newFolderPath).exists();
+        if(!moveDirectoryCreated) {
+            moveDirectoryCreated = new File(newFolderPath).mkdirs();
+        }
+
+        if(moveDirectoryCreated) {
+            // renaming the file and moving it to a new location
+            if(file.renameTo
+                    (new File(newFolderPath + file.getName())))
+            {
+                // if file copied successfully then delete the original file
+                if(file.delete()) {
+                    Log.d(sourceApk, "File moved successfully.", true);
+                } else {
+                    Log.e(sourceApk, "Failed to move file.", true);
+                }
+            }
+            else
+            {
+                Log.e(sourceApk, "Failed to move file.", true);
+            }
+        }
+    }
+
 }

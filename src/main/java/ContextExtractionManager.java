@@ -41,6 +41,7 @@ public class ContextExtractionManager {
             String apk = apkList.get(i);
             contextDroid.start(apk);
             Log.d(apkFolder,OutputUtil.getFolderPath(apk) + "\t" + apk + "\t" + i, true);
+            OutputUtil.moveAnalyzedApk(apk);
         }
         long end = System.currentTimeMillis();
 

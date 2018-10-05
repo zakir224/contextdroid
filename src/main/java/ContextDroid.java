@@ -5,6 +5,7 @@ import main.java.Permission.Permission;
 import main.java.Util.CommonUtil;
 import main.java.Util.ManifestUtil;
 import main.java.Util.OutputUtil;
+import main.java.Util.PermissionUtil;
 import main.java.debug.Log;
 import soot.SootMethod;
 import soot.jimple.toolkits.callgraph.CallGraph;
@@ -108,8 +109,14 @@ public class ContextDroid {
             OutputUtil.writeUsageOutput(finalPermissionMapping, appMetaData, datasetFile);
             OutputUtil.writeRequestOutput(finalRequestMapping, appMetaData, datasetFile);
             OutputUtil.writeTimeStat(statistic, datasetFile);
+            OutputUtil.writePermissions(appMetaData, datasetFile);
+            OutputUtil.writeRationale(appMetaData, permissionToRationale, datasetFile);
+            OutputUtil.writeServiceInitiator(appMetaData, serviceInitiator, datasetFile);
             finalPermissionMapping.clear();
             finalRequestMapping.clear();
+            serviceInitiator.clear();
+            permissionToRationale.clear();
+            appMetaData = null;
         } else {
             Log.d(apkName,"CallGraph generation failed for: " + appMetaData.getPackageName(), true);
         }
@@ -150,16 +157,19 @@ public class ContextDroid {
         }
     }
 
-    private void extractRationale(SootMethod sootMethod, String permission) {
-        String s = sootMethod.getActiveBody().toString();
-        if(parseCallGraph.checksRationale(s)) {
-            System.out.println("Found in :" + sootMethod.getSignature() + " " + permission);
-            if(permissionToRationale.containsKey(permission)) {
-                permissionToRationale.get(permission).add(sootMethod.getSignature());
-            } else {
-                ArrayList<String> list = new ArrayList<>();
-                list.add(sootMethod.getSignature());
-                permissionToRationale.put(permission, list);
+    private void extractRationale(SootMethod sootMethod, String perm) {
+        perm = PermissionUtil.removeDuplicatePermission(perm.replace("\"",""));
+        String[] multiplePermission = perm.split(",");
+        for (String permission: multiplePermission) {
+            if(parseCallGraph.extractRationale(sootMethod)) {
+                System.out.println("Check rationale found in :" + sootMethod.getSignature() + " " + permission);
+                if(permissionToRationale.containsKey(permission)) {
+                    permissionToRationale.get(permission).add(sootMethod.getSignature());
+                } else {
+                    ArrayList<String> list = new ArrayList<>();
+                    list.add(sootMethod.getDeclaringClass() + ": " + sootMethod.getName());
+                    permissionToRationale.put(permission, list);
+                }
             }
         }
     }

@@ -59,7 +59,13 @@ public class FlowDroidCallGraph {
             Log.d(apkName,"Call graph construction successful. Retrieving the callgraph..", true);
             return Scene.v().getCallGraph();
         } catch (ResolutionFailedException e) {
-            Log.e(apkName,"Resolution Failed for: " + apkName + e.getMessage(), true);
+            Log.e(apkName,"ResolutionFailedException: " + apkName  + "\t" + e.getMessage(), true);
+            return null;
+        } catch (ClassCastException e) {
+            Log.e(apkName,"ClassCastException: " + apkName  + "\t" + e.getMessage(), true);
+            return null;
+        } catch (RuntimeException e) {
+            Log.e(apkName,"RuntimeException: " + apkName  + "\t" + e.getMessage(), true);
             return null;
         }
     }
