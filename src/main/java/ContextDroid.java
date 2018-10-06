@@ -118,7 +118,11 @@ public class ContextDroid {
             permissionToRationale.clear();
             appMetaData = null;
         } else {
-            Log.d(apkName,"CallGraph generation failed for: " + appMetaData.getPackageName(), true);
+            try {
+                Log.d(apkName,"CallGraph generation failed for: " + appMetaData.getPackageName(), true);
+            } catch (NullPointerException e) {
+                Log.d(apkName,"CallGraph generation failed for: " + apkName, true);
+            }
         }
     }
 

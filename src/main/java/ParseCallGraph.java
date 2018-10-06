@@ -3,6 +3,7 @@ package main.java;
 import com.google.common.base.Strings;
 import main.java.Permission.Permission;
 import main.java.Util.PermissionUtil;
+import main.java.debug.Log;
 import soot.*;
 import soot.jimple.infoflow.solver.cfg.InfoflowCFG;
 import soot.jimple.toolkits.callgraph.CallGraph;
@@ -213,9 +214,13 @@ public class ParseCallGraph {
 
         while (sources.hasNext()) {
             SootMethod callerMethod = (SootMethod) sources.next();
-            if (!listOfVisitedMethods.containsKey(callerMethod.getSignature())) {
-                listOfVisitedMethods.put(callerMethod.getSignature(), 1);
-                listOfMethods.add(callerMethod);
+            try {
+                if (!listOfVisitedMethods.containsKey(callerMethod.getSignature())) {
+                    listOfVisitedMethods.put(callerMethod.getSignature(), 1);
+                    listOfMethods.add(callerMethod);
+                }
+            } catch (RuntimeException e) {
+                Log.e("", e.getMessage(), true);
             }
         }
     }
