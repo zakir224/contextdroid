@@ -1,13 +1,12 @@
 package main.java.Util;
 
+import main.java.Permission.Permission;
 import soot.PatchingChain;
 import soot.Unit;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class CommonUtil {
 
@@ -33,13 +32,24 @@ public class CommonUtil {
         }
     }
 
-    public static ArrayList<String> listApkFiles(String apkName) {
+    public static ArrayList<String> listApkFiles(String apkFolder, boolean restart) {
+        ArrayList<String> completedApkList = new ArrayList<>();
+        if(restart) {
+            completedApkList = OutputUtil.getCompletedApkList(apkFolder);
+        }
+
         ArrayList<String> apkList = new ArrayList<>();
-        File[] files = new File(apkName).listFiles();
+        File[] files = new File(apkFolder).listFiles();
         if (files != null) {
             for (File file : files) {
-                if (file.isFile() && file.getName().contains(".apk")) {
-                    apkList.add(file.getAbsolutePath());
+                String fileName = file.getName();
+                if (file.isFile() && fileName.contains(".apk")) {
+                    if(completedApkList != null && completedApkList.size() > 0
+                            && completedApkList.contains(StringUtil.extractSha256FromFileName(fileName))) {
+
+                    } else {
+                        apkList.add(file.getAbsolutePath());
+                    }
                 }
             }
         }

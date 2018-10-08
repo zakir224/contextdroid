@@ -7,11 +7,14 @@ import main.java.Util.ManifestUtil;
 import main.java.Util.OutputUtil;
 import main.java.Util.PermissionUtil;
 import main.java.debug.Log;
+import org.omg.CORBA.TIMEOUT;
 import soot.SootMethod;
 import soot.jimple.toolkits.callgraph.CallGraph;
 //import sun.plugin2.util.SystemUtil;
 
+import java.sql.Time;
 import java.util.*;
+import java.util.concurrent.*;
 
 
 public class ContextDroid {
@@ -33,7 +36,7 @@ public class ContextDroid {
     private HashMap<String, ArrayList<String>> permissionToRationale;
     private HashMap<String, String> serviceInitiator;
 
-    public ContextDroid(String androidPlatform, String appToAnalyze) {
+    public ContextDroid(String androidPlatform, String appToAnalyze, boolean restart) {
         Log.d(appToAnalyze,"Constructor: ContextDroid....", true);
         this.datasetFile = OutputUtil.getFolderPath(appToAnalyze);
         finalPermissionMapping = new HashMap<>();
@@ -41,17 +44,19 @@ public class ContextDroid {
         permissionToRationale = new HashMap<>();
         serviceInitiator = new HashMap<>();
 
-        initializeAnalyzer(androidPlatform, appToAnalyze);
+        initializeAnalyzer(androidPlatform, appToAnalyze, restart);
     }
 
-    private void initializeAnalyzer(String androidPlatform, String appToAnalyze) {
+    private void initializeAnalyzer(String androidPlatform, String appToAnalyze, boolean restart) {
         Log.d(appToAnalyze, "Initializing: ContextDroid...", true);
         permissionHashMap = PSCoutPermissionMap.getInstance().loadPermissionMapping("resources/pscout/pscout411.txt");
         permissionSet = permissionHashMap.values();
         flowDroidCallGraph = new FlowDroidCallGraph(androidPlatform, appToAnalyze);
         parseCallGraph = new ParseCallGraph();
-        OutputUtil.initOutputFiles(datasetFile);
-        OutputUtil.intiStat(datasetFile);
+        if(!restart) {
+            OutputUtil.initOutputFiles(datasetFile);
+            OutputUtil.intiStat(datasetFile);
+        }
         Log.d(appToAnalyze, "Initialization done", true);
     }
 
@@ -83,17 +88,36 @@ public class ContextDroid {
 
     private boolean initCallGraph(String apkName) {
         startTime = System.currentTimeMillis();
-        CallGraph callGraph = flowDroidCallGraph.getCallGraph(apkName);
-        if (callGraph == null) {
+        ExecutorService executor = Executors.newCachedThreadPool();
+        Future<CallGraph> future = null;
+        Callable<CallGraph> task = () -> flowDroidCallGraph.getCallGraph(apkName);
+
+        future = executor.submit(task);
+        try {
+            CallGraph callGraph = future.get(10, TimeUnit.MINUTES);
+            parseCallGraph.init().setCallGraph(callGraph);
+            endTime = System.currentTimeMillis();
+            statistic.setCallGraphGenerationTime(CommonUtil.getTimeDifferenceInSeconds(startTime, endTime));
+            parseCallGraph.setAppPackageName(appMetaData.getPackageName());
+            Log.d(apkName,"CallGraph initialization " +
+                    "by FlowDroid took: " + statistic.getCallGraphGenerationTime() + " Seconds", true);
+            return true;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            future.cancel(true);
+            executor.shutdownNow();
+            flowDroidCallGraph.reset();
+            return false;
+        } catch (ExecutionException | TimeoutException e) {
+            future.cancel(true);
+            executor.shutdownNow();
+            Log.e(apkName,"Timeout:\t" + apkName, true);
+            flowDroidCallGraph.reset();
+            return false;
+        } catch (Exception e) {
             return false;
         }
-        parseCallGraph.init().setCallGraph(callGraph);
-        endTime = System.currentTimeMillis();
-        statistic.setCallGraphGenerationTime(CommonUtil.getTimeDifferenceInSeconds(startTime, endTime));
-        parseCallGraph.setAppPackageName(appMetaData.getPackageName());
-        Log.d(apkName,"CallGraph initialization " +
-                "by FlowDroid took: " + statistic.getCallGraphGenerationTime() + " Seconds", true);
-        return true;
+
     }
 
 

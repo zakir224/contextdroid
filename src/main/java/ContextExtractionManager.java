@@ -15,13 +15,13 @@ public class ContextExtractionManager {
     ContextDroid contextDroid;
     private ArrayList<String> apkList;
 
-    public ContextExtractionManager(String apkFolder, String androidPlatform) {
+    public ContextExtractionManager(String apkFolder, String androidPlatform, boolean restart) {
         this.apkFolder = apkFolder;
         this.androidPlatform = androidPlatform;
-        apkList = CommonUtil.listApkFiles(apkFolder);
+        apkList = CommonUtil.listApkFiles(apkFolder, restart);
         initPermissionGroup();
         if (apkList != null && apkList.size() > 0) {
-            contextDroid = new ContextDroid(androidPlatform, apkList.get(0));
+            contextDroid = new ContextDroid(androidPlatform, apkList.get(0), restart);
         }
     }
 

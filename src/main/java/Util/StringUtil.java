@@ -20,6 +20,15 @@ public class StringUtil {
         }
     }
 
+    public static String extractSha256FromFileName(String fileName) {
+            String[] fileNameToken = fileName.split("\\.");
+            if (fileNameToken.length == 2) { // its a hash
+                return fileNameToken[0];
+            } else {            // find the hash
+                return "";
+            }
+    }
+
     private static String toHex(byte[] bytes) {
         return DatatypeConverter.printHexBinary(bytes);
     }

@@ -4,7 +4,9 @@ import main.java.*;
 import main.java.Permission.Permission;
 import main.java.debug.Log;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,6 +79,33 @@ public class OutputUtil {
             e.printStackTrace();
         }
 
+    }
+
+
+    public static ArrayList<String> getCompletedApkList(String datasetFile) {
+
+        ArrayList<String> completedApkHashList = new ArrayList<>();
+        try {
+            File file = new File(datasetFile + OUTPUT_PERMISSION);
+            FileReader fileReader = new FileReader(file);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String line;
+            int lineCount = 0;
+            while ((line = bufferedReader.readLine()) != null) {
+                lineCount++;
+                String[] tokens = line.split("\t");
+                try {
+                    completedApkHashList.add(tokens[5]);
+                } catch (IndexOutOfBoundsException e) {
+                   Log.e(datasetFile, e.getMessage(), true);
+                }
+            }
+            fileReader.close();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return completedApkHashList;
     }
 
     public static void writeRationale(AppMetaData appMetaData, HashMap<String, ArrayList<String>> rationale, String datasetFile) {

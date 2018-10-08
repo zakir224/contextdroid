@@ -19,6 +19,7 @@ public class FlowDroidCallGraph {
 
 //    public static FlowDroidCallGraph flowDroidCallGraph;
     private String androidPlatform;
+    private SetupApplication anayzer;
 
 
     public FlowDroidCallGraph(String androidPlatform, String apkName) {
@@ -87,6 +88,7 @@ public class FlowDroidCallGraph {
     private SetupApplication getApplicationAnalyser(String apkName) {
 
         SetupApplication applicationAnalyzer = new SetupApplication(androidPlatform, apkName);
+        anayzer = applicationAnalyzer;
         applicationAnalyzer.getConfig().setEnableStaticFieldTracking(true);
         applicationAnalyzer.getConfig().setFlowSensitiveAliasing(true); // alias flowin
         applicationAnalyzer.getConfig().setTaintAnalysisEnabled(false);
@@ -98,5 +100,12 @@ public class FlowDroidCallGraph {
 
     public Chain<SootClass> getApplicationClasses() {
         return Scene.v().getApplicationClasses();
+    }
+
+    public void reset() {
+        G.reset();
+        Scene.v().setDoneResolving();
+        anayzer.abortAnalysis();
+        anayzer = null;
     }
 }
