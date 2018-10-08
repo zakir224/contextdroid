@@ -183,7 +183,13 @@ public class ParseCallGraph {
     }
 
     private void listMethodsFromCallGraph(ArrayList<SootMethod> listOfMethods) {
-        Iterator<MethodOrMethodContext> tr = callGraph.sourceMethods();
+        Iterator<MethodOrMethodContext> tr;
+        try {
+            tr = callGraph.sourceMethods();
+        } catch (Exception e) {
+            Log.e(getAppPackageName(), "Callgraph null while listing methods", true);
+            return;
+        }
         HashMap<String, Integer> listOfVisitedMethods = new HashMap<>();
 
         while (tr.hasNext()) {

@@ -101,7 +101,7 @@ public class ContextDroid {
             parseCallGraph.setAppPackageName(appMetaData.getPackageName());
             Log.d(apkName,"CallGraph initialization " +
                     "by FlowDroid took: " + statistic.getCallGraphGenerationTime() + " Seconds", true);
-            return true;
+            return callGraph != null;
         } catch (InterruptedException e) {
             e.printStackTrace();
             future.cancel(true);
