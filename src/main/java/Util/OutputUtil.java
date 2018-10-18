@@ -1,15 +1,13 @@
 package main.java.Util;
 
 import main.java.*;
-import main.java.Permission.Permission;
 import main.java.debug.Log;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Set;
 
 public class OutputUtil {
 
@@ -276,4 +274,150 @@ public class OutputUtil {
         }
     }
 
+
+    public static ArrayList<String> getBufferedReader(String filePath) {
+        try {
+            ArrayList<String> lines = new ArrayList<>();
+            File file = new File(filePath);
+            FileReader fileReader = new FileReader(file);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String line;
+            int lineCount = 0;
+            while ((line = bufferedReader.readLine()) != null) {
+                lines.add(line);
+            }
+            fileReader.close();
+
+            return lines;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
+    public static Set<String> getApps(String fileName) {
+        try {
+            Set<String> lines = new HashSet<>();
+            File file = new File(fileName);
+            FileReader fileReader = new FileReader(file);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String line;
+            int lineCount = 0;
+            while ((line = bufferedReader.readLine()) != null) {
+                try {
+                    String[] tokens = line.split("\t");
+                    lines.add(tokens[0] + "_" +tokens[2]);
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    //e.printStackTrace();
+                    lineCount ++;
+                }
+            }
+            fileReader.close();
+
+            return lines;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
+    public static HashMap<String, Integer> getVTscan(String fileName, ArrayList<String> apps) {
+        try {
+            HashMap<String, Integer> lines = new HashMap<>();
+            File file = new File(fileName);
+            FileReader fileReader = new FileReader(file);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String line;
+            int lineCount = 0;
+            while ((line = bufferedReader.readLine()) != null) {
+                String[] tokens = line.split(",");
+                if(lineCount > 0 && !tokens[7].equals("") && !tokens[7].equals("0") ) {
+                    try {
+                        String app = tokens[5].replace("\"", "") + "_" + tokens[6];
+                        if(apps.contains(app)) {
+                            lines.put(app, Integer.valueOf(tokens[7]));
+                        }
+                    } catch (NumberFormatException e) {
+
+                    }
+                }
+                lineCount++;
+            }
+            fileReader.close();
+
+            return lines;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
+    public static HashMap<String, Integer> readVTscan(String fileName, HashMap<String, HashMap<String, Set<String>>> usageContexts, HashMap<String, HashMap<String, Set<String>>> resuestContexts) {
+        try {
+            HashMap<String, Integer> lines = new HashMap<>();
+            File file = new File(fileName);
+            FileReader fileReader = new FileReader(file);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String line;
+            int lineCount = 0;
+            while ((line = bufferedReader.readLine()) != null) {
+                String[] tokens = line.split("\t");
+                if(tokens.length > 1  &&
+                        !tokens[1].equals("") && !tokens[1].equals("0") ) {
+                    try {
+                        String app = tokens[0];
+                        if(Integer.valueOf(tokens[1]) > 0)
+                            lines.put(app, Integer.valueOf(tokens[1]));
+                    } catch (NumberFormatException e) {
+
+                    }
+                }
+                lineCount++;
+            }
+            fileReader.close();
+
+            return lines;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
+    public static HashMap<String, Integer> readVT(String fileName, Set<String> apps) {
+        try {
+            HashMap<String, Integer> lines = new HashMap<>();
+            File file = new File(fileName);
+            FileReader fileReader = new FileReader(file);
+            BufferedReader bufferedReader = new BufferedReader(fileReader);
+            String line;
+            int lineCount = 0;
+            while ((line = bufferedReader.readLine()) != null) {
+                String[] tokens = line.split(",");
+                if(lineCount > 0) {
+                    try {
+                        String app = tokens[5].replace("\"", "") + "_" + tokens[6];
+                        if(apps.contains(app)) {
+                            CommonUtil.write(app +"\t"+ tokens[7], "vt_scan.txt");
+//                            lines.put(app, Integer.valueOf(tokens[7]));
+                        }
+                    } catch (IOException e) {
+                        CommonUtil.write(line, "error.txt");
+
+                    }
+                }
+                lineCount++;
+            }
+            fileReader.close();
+
+            return lines;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
 }
