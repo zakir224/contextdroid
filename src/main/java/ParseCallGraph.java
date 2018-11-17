@@ -200,6 +200,7 @@ public class ParseCallGraph {
             }
 
             listParentMethods(listOfMethods, mainSourceMethod, listOfVisitedMethods);
+            listChildMethods(listOfMethods, mainSourceMethod, listOfVisitedMethods);
         }
     }
 

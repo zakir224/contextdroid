@@ -1,5 +1,7 @@
 package main.java;
 
+import main.java.Permission.ContentPermission;
+import main.java.Permission.ContentPermissionMap;
 import main.java.Permission.PSCoutPermissionMap;
 import main.java.Permission.Permission;
 import main.java.Util.CommonUtil;
@@ -12,6 +14,7 @@ import soot.SootMethod;
 import soot.jimple.toolkits.callgraph.CallGraph;
 //import sun.plugin2.util.SystemUtil;
 
+import java.io.IOException;
 import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.*;
@@ -50,6 +53,7 @@ public class ContextDroid {
     private void initializeAnalyzer(String androidPlatform, String appToAnalyze, boolean restart) {
         Log.d(appToAnalyze, "Initializing: ContextDroid...", true);
         permissionHashMap = PSCoutPermissionMap.getInstance().loadPermissionMapping("resources/pscout/pscout411.txt");
+        permissionHashMap.putAll(ContentPermissionMap.getInstance().loadPermissionMapping("resources/pscout/content_provider.txt"));
         permissionSet = permissionHashMap.values();
         flowDroidCallGraph = new FlowDroidCallGraph(androidPlatform, appToAnalyze);
         parseCallGraph = new ParseCallGraph();
@@ -81,6 +85,14 @@ public class ContextDroid {
         listOfAppMethods = parseCallGraph.listMethods();
         endTime = System.currentTimeMillis();
         statistic.setNumberOfMethods(listOfAppMethods.size());
+        for (SootMethod method :
+                listOfAppMethods) {
+            try {
+                CommonUtil.write(method.getSignature() + "\n", "classes.txt");
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         statistic.setListingMethodsTime(CommonUtil.getTimeDifferenceInSeconds(startTime, endTime));
         Log.d(apkName, "CallGraph initialization took: " + statistic.getListingMethodsTime() + " Seconds"
                 , true);
@@ -211,15 +223,43 @@ public class ContextDroid {
     }
 
     private void extractPermissionUsage(Permission p, String methodBody, SootMethod sootMethod) {
-        if (methodBody.contains(p.getPackageName()) && methodBody.contains(p.getMethodSignature())) {
+        if (!(p instanceof ContentPermission) &&
+                methodBody.contains(p.getPackageName()) && methodBody.contains(p.getMethodSignature())) {
             MethodContext methodContext = parseCallGraph.extractMethodProperties(sootMethod, p);
             finalPermissionMapping.put(sootMethod.getSignature().concat(" " + p), methodContext);
+        } else if((p instanceof ContentPermission)) {
+            if(methodBody.contains(((ContentPermission) p).getContentUri()) && methodBody.contains(p.getPackageName())) {
+                if(queryNeededForPermission(p) && containsQuery(methodBody)) {
+                    MethodContext methodContext = parseCallGraph.extractMethodProperties(sootMethod, p);
+                    finalPermissionMapping.put(sootMethod.getSignature().concat(" " + p), methodContext);
+                } else if(!queryNeededForPermission(p)) {
+                    MethodContext methodContext = parseCallGraph.extractMethodProperties(sootMethod, p);
+                    finalPermissionMapping.put(sootMethod.getSignature().concat(" " + p), methodContext);
+                }
+            } else if(p.getPermission().contains("READ_CONTACT") && !finalPermissionMapping.containsKey(sootMethod.getSignature().concat(" " + p))){
+                if(methodBody.contains("android.provider.ContactsContract$Contacts: android.net.Uri CONTENT_URI")
+                        || methodBody.contains("android.provider.ContactsContract$CommonDataKinds$Phone: android.net.Uri CONTENT_URI")) {
+                        if(containsQuery(methodBody)) {
+                            MethodContext methodContext = parseCallGraph.extractMethodProperties(sootMethod, p);
+                            finalPermissionMapping.put(sootMethod.getSignature().concat(" " + p), methodContext);
+                        }
+                }
+            }
         }
+    }
+
+    private boolean containsQuery(String methodBody) {
+        return methodBody.contains("query(android.net.Uri,java.lang.String[],java.lang.String,java.lang.String[],java.lang.String)");
+    }
+
+    private boolean queryNeededForPermission(Permission p) {
+        return (p.getPermission().contains("READ_SMS") ||p.getPermission().contains("READ_CONTACT") ||p.getPermission().contains("READ_CALENDAR"));
     }
 
     private void getServiceInitiator(SootMethod sootMethod) {
         String s = sootMethod.getActiveBody().toString();
-        if(s.contains("startService(android.content.Intent)")) {
+        if(s.contains("startService(android.content.Intent)")
+        || s.contains("startBackgroundService(android.content.Context,android.content.Intent)")) {
             s = s.replace("/",".");
             for (String service : appMetaData.getServices()) {
                 if(s.contains(service)) {

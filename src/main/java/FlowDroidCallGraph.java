@@ -55,7 +55,7 @@ public class FlowDroidCallGraph {
         }
         Log.d(apkName,"Constructing call graph...", true);
         try {
-            PackManager.v().runPacks();
+            //PackManager.v().runPacks();
             setupApplication.constructCallgraph();
             Log.d(apkName,"Call graph construction successful. Retrieving the callgraph..", true);
             return Scene.v().getCallGraph();
