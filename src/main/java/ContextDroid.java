@@ -142,8 +142,9 @@ public class ContextDroid {
             endTime = System.currentTimeMillis();
             statistic.setContextExtractionTime(CommonUtil.getTimeDifferenceInSeconds(startTime, endTime));
             Log.d(apkName,"Context Extraction took: " + statistic.getContextExtractionTime() + " Seconds", true);
-            OutputUtil.writeUsageOutput(finalPermissionMapping, appMetaData, datasetFile);
-            OutputUtil.writeRequestOutput(finalRequestMapping, appMetaData, datasetFile);
+            LinkedHashMap<String, ArrayList<String>> permUsage = OutputUtil.writeUsageOutput(finalPermissionMapping, appMetaData, datasetFile);
+            LinkedHashMap<String, ArrayList<String>> permRequest = OutputUtil.writeRequestOutput(finalRequestMapping, appMetaData, datasetFile);
+            OutputUtil.writePrettyOutput(apkName, permRequest, permUsage);
             OutputUtil.writeTimeStat(statistic, datasetFile);
             OutputUtil.writePermissions(appMetaData, datasetFile);
             OutputUtil.writeRationale(appMetaData, permissionToRationale, datasetFile);

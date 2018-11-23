@@ -4,10 +4,7 @@ import main.java.*;
 import main.java.debug.Log;
 
 import java.io.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 public class OutputUtil {
 
@@ -18,8 +15,9 @@ public class OutputUtil {
     private static final String OUTPUT_SERVICE_INITIATOR = "service_initiator.txt";
     private static final String OUTPUT_STAT = "time_stats.txt";
 
-    public static void writeRequestOutput(HashMap<String, RequestMethodContext> finalRequestMapping,
-                                          AppMetaData appMetaData, String datasetFile) {
+    public static LinkedHashMap<String, ArrayList<String>> writeRequestOutput(HashMap<String, RequestMethodContext> finalRequestMapping,
+                                                                              AppMetaData appMetaData, String datasetFile) {
+        HashSet<String> permissionToContext = new HashSet<>();
         for (RequestMethodContext methodContext :
                 finalRequestMapping.values()) {
             String className = methodContext.getClassName();
@@ -34,7 +32,13 @@ public class OutputUtil {
                 String finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName()
                         + "\t" + appMetaData.getVersionCode() + "\t" + className + "\t" + methodName + "\t" + permission + "\t"
                         + visibilityType + "\t" + appMetaData.getSha256();
+                String context = appMetaData.getPackageName() + "\t" +className+ "\t"  + permission + "\t" + visibilityType;
+                try {
+                    if(!visibilityType.equals("CUSTOM"))
+                        permissionToContext.add(context);
+                } catch (Exception e) {
 
+                }
                 try {
                     CommonUtil.write(finalString, datasetFile + OUTPUT_REQUEST);
                 } catch (IOException e) {
@@ -46,6 +50,13 @@ public class OutputUtil {
                     finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName() + "\t" + appMetaData.getVersionCode() + "\t" +
                             callerMethod.getClassName() + "\t" + callerMethod.getMethodName() + "\t" + permission + "\t" +
                             callerMethod.getVisibilityType() + "\t" + appMetaData.getSha256();
+                    context = appMetaData.getPackageName() + "\t" +className+ "\t"  + permission + "\t" + visibilityType;
+                    try {
+                        if(!visibilityType.equals("CUSTOM"))
+                            permissionToContext.add(context);
+                    } catch (Exception e) {
+
+                    }
                     try {
                         CommonUtil.write(finalString, datasetFile + OUTPUT_REQUEST);
                     } catch (IOException e) {
@@ -56,6 +67,28 @@ public class OutputUtil {
             }
 
         }
+        LinkedHashMap<String, ArrayList<String>> perms = new LinkedHashMap<>();
+        for (String context :
+                permissionToContext) {
+            String[] con = context.split("\t");
+            if(perms.containsKey(con[2])) {
+                perms.get(con[2]).add(con[1]+":"+ con[3]);
+            } else {
+                perms.put(con[2], new ArrayList<>());
+                perms.get(con[2]).add(con[1]+":"+ con[3]);
+            }
+        }
+
+//        System.out.println("Permission Requests:\n");
+//        perms.forEach((per, con) -> {
+//            System.out.println(per +": ");
+//            for (String st :
+//                    con) {
+//                System.out.println(st + "\n");
+//            }
+//        });
+
+        return perms;
     }
 
     public static void writePermissions(AppMetaData appMetaData, String datasetFile) {
@@ -165,7 +198,8 @@ public class OutputUtil {
 
     }
 
-    public static void writeUsageOutput(HashMap<String, MethodContext> finalPermissionMapping, AppMetaData appMetaData, String datasetFile) {
+    public static LinkedHashMap<String, ArrayList<String>> writeUsageOutput(HashMap<String, MethodContext> finalPermissionMapping, AppMetaData appMetaData, String datasetFile) {
+        HashSet<String> permissionToContext = new HashSet<>();
         for (MethodContext methodContext :
                 finalPermissionMapping.values()) {
             String className = methodContext.getClassName();
@@ -179,6 +213,14 @@ public class OutputUtil {
             String finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName() + "\t" + appMetaData.getVersionCode() + "\t"
                     + className + "\t" + methodName + "\t" + permission + "\t" + invokedMethod
                     + "\t" + visibilityType  + "\t" + appMetaData.getSha256();
+            String context = appMetaData.getPackageName() + "\t" +className+ "\t"  + permission + "\t" + visibilityType;
+            try {
+                if(!visibilityType.equals("CUSTOM"))
+                    permissionToContext.add(context);
+            } catch (Exception e) {
+
+            }
+
             try {
                 CommonUtil.write(finalString, datasetFile + OUTPUT_USAGE);
             } catch (IOException e) {
@@ -190,6 +232,13 @@ public class OutputUtil {
                 finalString = appMetaData.getPackageName() + "\t" + appMetaData.getVersionName() + "\t" + appMetaData.getVersionCode() + "\t"
                         + callerMethod.getClassName() + "\t" + callerMethod.getMethodName() + "\t" + permission + "\t" + invokedMethod
                         + "\t" + callerMethod.getVisibilityType() + "\t" + appMetaData.getSha256();
+                context = appMetaData.getPackageName() + "\t" +className+ "\t"  + permission + "\t" + visibilityType;
+                try {
+                    if(!visibilityType.equals("CUSTOM"))
+                        permissionToContext.add(context);
+                } catch (Exception e) {
+
+                }
                 try {
                     CommonUtil.write(finalString, datasetFile + OUTPUT_USAGE);
                 } catch (IOException e) {
@@ -197,6 +246,29 @@ public class OutputUtil {
                 }
             }
         }
+
+        LinkedHashMap<String, ArrayList<String>> perms = new LinkedHashMap<>();
+        for (String context :
+                permissionToContext) {
+            String[] con = context.split("\t");
+            if(perms.containsKey(con[2])) {
+                perms.get(con[2]).add(con[1]+":"+ con[3]);
+            } else {
+                perms.put(con[2], new ArrayList<>());
+                perms.get(con[2]).add(con[1]+":"+ con[3]);
+            }
+        }
+
+//        System.out.println("Permission Usage:\n");
+//        perms.forEach((per, con) -> {
+//            System.out.println(per +": ");
+//            for (String st :
+//                    con) {
+//                System.out.println(st + "\n");
+//            }
+//        });
+//
+        return perms;
     }
 
     public static void writeTimeStat(ApkProcessingStatistic stats, String datasetFile) {
@@ -419,5 +491,28 @@ public class OutputUtil {
             return null;
         }
 
+    }
+
+    public static void writePrettyOutput(String app, LinkedHashMap<String, ArrayList<String>> permRequest, LinkedHashMap<String, ArrayList<String>> permUsage) {
+        System.out.println("App: " + app);
+        permUsage.forEach((per, con) -> {
+            System.out.println(per);
+            System.out.println("Requested in: ");
+            if (permRequest.containsKey(per)) {
+                ArrayList<String> requests = permRequest.get(per);
+                for (String req :
+                        requests) {
+                    System.out.println(req);
+                }
+            } else {
+                System.out.println("Request for this permission not found");
+            }
+
+            System.out.println("Used in: ");
+            for (String st :
+                    con) {
+                System.out.println(st);
+            }
+        });
     }
 }
