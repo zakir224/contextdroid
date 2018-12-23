@@ -495,20 +495,18 @@ public class OutputUtil {
 
     public static void writePrettyOutput(String app, LinkedHashMap<String, ArrayList<String>> permRequest, LinkedHashMap<String, ArrayList<String>> permUsage) {
         System.out.println("App: " + app);
+        System.out.println("Requests: ");
+        permRequest.forEach((per, con) -> {
+            System.out.println(per);
+            for (String st :
+                    con) {
+                System.out.println(st);
+            }
+        });
+        System.out.println("Usage: ");
         permUsage.forEach((per, con) -> {
             System.out.println(per);
-            System.out.println("Requested in: ");
-            if (permRequest.containsKey(per)) {
-                ArrayList<String> requests = permRequest.get(per);
-                for (String req :
-                        requests) {
-                    System.out.println(req);
-                }
-            } else {
-                System.out.println("Request for this permission not found");
-            }
 
-            System.out.println("Used in: ");
             for (String st :
                     con) {
                 System.out.println(st);

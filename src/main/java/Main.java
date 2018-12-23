@@ -4,10 +4,10 @@ package main.java;
 public class Main {
 
     public static void main(String[] args) {
-        if (args.length == 0) {
+        if (args.length > 1) {
             String restart = "";
-            String androidPlatform = "/mnt/6a3e12f5-fa82-4667-be38-a46ad0e34f7c/android-sdk/sdk/platforms/";//args[0];
-            String apkFolder = "/media/zakir/HDD2/Jadx/pathao/";//args[1];
+            String androidPlatform = args[0];
+            String apkFolder = args[1];
 //            if(args.length > 2) {
 //                restart = args[2];
 //            }

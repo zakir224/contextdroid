@@ -9,13 +9,11 @@ import main.java.Util.ManifestUtil;
 import main.java.Util.OutputUtil;
 import main.java.Util.PermissionUtil;
 import main.java.debug.Log;
-import org.omg.CORBA.TIMEOUT;
 import soot.SootMethod;
 import soot.jimple.toolkits.callgraph.CallGraph;
 //import sun.plugin2.util.SystemUtil;
 
 import java.io.IOException;
-import java.sql.Time;
 import java.util.*;
 import java.util.concurrent.*;
 
@@ -24,7 +22,7 @@ public class ContextDroid {
 
 
     private static Collection<Permission> permissionSet;
-    private String datasetFile;
+    private String apkFolder;
     private HashMap<String, Permission> permissionHashMap;
     private ParseCallGraph parseCallGraph;
     private ArrayList<SootMethod> listOfAppMethods;
@@ -39,35 +37,38 @@ public class ContextDroid {
     private HashMap<String, ArrayList<String>> permissionToRationale;
     private HashMap<String, String> serviceInitiator;
 
-    public ContextDroid(String androidPlatform, String appToAnalyze, boolean restart) {
-        Log.d(appToAnalyze,"Constructor: ContextDroid....", true);
-        this.datasetFile = OutputUtil.getFolderPath(appToAnalyze);
-        finalPermissionMapping = new HashMap<>();
-        finalRequestMapping = new HashMap<>();
-        permissionToRationale = new HashMap<>();
-        serviceInitiator = new HashMap<>();
-
-        initializeAnalyzer(androidPlatform, appToAnalyze, restart);
+    public ContextDroid(String androidPlatform, String apkFolder, boolean restart) {
+        Log.d(apkFolder,"Constructor: ContextDroid....", true);
+        initializeAnalyzer(androidPlatform, apkFolder, restart);
     }
 
     private void initializeAnalyzer(String androidPlatform, String appToAnalyze, boolean restart) {
         Log.d(appToAnalyze, "Initializing: ContextDroid...", true);
+        setApkFolder(apkFolder);
+        finalPermissionMapping = new HashMap<>();
+        finalRequestMapping = new HashMap<>();
+        permissionToRationale = new HashMap<>();
+        serviceInitiator = new HashMap<>();
         permissionHashMap = PSCoutPermissionMap.getInstance().loadPermissionMapping("resources/pscout/pscout411.txt");
         permissionHashMap.putAll(ContentPermissionMap.getInstance().loadPermissionMapping("resources/pscout/content_provider.txt"));
         permissionSet = permissionHashMap.values();
+
         flowDroidCallGraph = new FlowDroidCallGraph(androidPlatform, appToAnalyze);
         parseCallGraph = new ParseCallGraph();
         if(!restart) {
-            OutputUtil.initOutputFiles(datasetFile);
-            OutputUtil.intiStat(datasetFile);
+            OutputUtil.initOutputFiles(apkFolder);
+            OutputUtil.intiStat(apkFolder);
         }
         Log.d(appToAnalyze, "Initialization done", true);
+    }
+
+    public void setApkFolder(String apkFolder) {
+        this.apkFolder = OutputUtil.getFolderPath(apkFolder);
     }
 
     private boolean processCallGraph(String apkName) {
         if (flowDroidCallGraph != null) {
             Log.d(apkName,"Starting FlowDroid...", true);
-
             if(initCallGraph(apkName)) {
                 extractMethodList(apkName);
                 return true;
@@ -136,24 +137,17 @@ public class ContextDroid {
     public void start(String apkName) {
         Log.d(apkName,"Starting analysis..", true);
         if (updateAppMetadata(apkName) && processCallGraph(apkName)) {
+
             Log.d(apkName,"Extracting contexts.....", true);
             startTime = System.currentTimeMillis();
-            extractPermissionUsageContext();
+            extractPermissionContexts();
             endTime = System.currentTimeMillis();
+
             statistic.setContextExtractionTime(CommonUtil.getTimeDifferenceInSeconds(startTime, endTime));
             Log.d(apkName,"Context Extraction took: " + statistic.getContextExtractionTime() + " Seconds", true);
-            LinkedHashMap<String, ArrayList<String>> permUsage = OutputUtil.writeUsageOutput(finalPermissionMapping, appMetaData, datasetFile);
-            LinkedHashMap<String, ArrayList<String>> permRequest = OutputUtil.writeRequestOutput(finalRequestMapping, appMetaData, datasetFile);
-            OutputUtil.writePrettyOutput(apkName, permRequest, permUsage);
-            OutputUtil.writeTimeStat(statistic, datasetFile);
-            OutputUtil.writePermissions(appMetaData, datasetFile);
-            OutputUtil.writeRationale(appMetaData, permissionToRationale, datasetFile);
-            OutputUtil.writeServiceInitiator(appMetaData, serviceInitiator, datasetFile);
-            finalPermissionMapping.clear();
-            finalRequestMapping.clear();
-            serviceInitiator.clear();
-            permissionToRationale.clear();
-            appMetaData = null;
+
+            writeOutput(apkName);
+            clearData();
         } else {
             try {
                 Log.d(apkName,"CallGraph generation failed for: " + appMetaData.getPackageName(), true);
@@ -161,6 +155,25 @@ public class ContextDroid {
                 Log.d(apkName,"CallGraph generation failed for: " + apkName, true);
             }
         }
+    }
+
+    private void clearData() {
+        finalPermissionMapping.clear();
+        finalRequestMapping.clear();
+        serviceInitiator.clear();
+        permissionToRationale.clear();
+        appMetaData = null;
+    }
+
+    private void writeOutput(String apkName) {
+        LinkedHashMap<String, ArrayList<String>> permUsage = OutputUtil.writeUsageOutput(finalPermissionMapping, appMetaData, apkFolder);
+        LinkedHashMap<String, ArrayList<String>> permRequest = OutputUtil.writeRequestOutput(finalRequestMapping, appMetaData, apkFolder);
+
+        OutputUtil.writePrettyOutput(apkName, permRequest, permUsage);
+        OutputUtil.writeTimeStat(statistic, apkFolder);
+        OutputUtil.writePermissions(appMetaData, apkFolder);
+        OutputUtil.writeRationale(appMetaData, permissionToRationale, apkFolder);
+        OutputUtil.writeServiceInitiator(appMetaData, serviceInitiator, apkFolder);
     }
 
     private boolean updateAppMetadata(String apkName) {
@@ -176,7 +189,7 @@ public class ContextDroid {
         }
     }
 
-    private void extractPermissionUsageContext() {
+    private void extractPermissionContexts() {
         for (SootMethod method :
                 listOfAppMethods) {
             checkPermission(method);
