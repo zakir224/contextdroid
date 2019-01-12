@@ -44,7 +44,7 @@ public class ContextDroid {
 
     private void initializeAnalyzer(String androidPlatform, String appToAnalyze, boolean restart) {
         Log.d(appToAnalyze, "Initializing: ContextDroid...", true);
-        setApkFolder(apkFolder);
+        setApkFolder(appToAnalyze);
         finalPermissionMapping = new HashMap<>();
         finalRequestMapping = new HashMap<>();
         permissionToRationale = new HashMap<>();

@@ -8,9 +8,9 @@ public class Main {
             String restart = "";
             String androidPlatform = args[0];
             String apkFolder = args[1];
-//            if(args.length > 2) {
-//                restart = args[2];
-//            }
+            if(args.length > 2) {
+                restart = args[2];
+            }
             System.out.println(androidPlatform + "\t" + apkFolder);
             ContextExtractionManager contextDroid = new ContextExtractionManager(apkFolder
                     , androidPlatform, restart != null && restart.equals("restart"));
